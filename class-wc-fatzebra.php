@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/help
 Description: Extends WooCommerce with Fat Zebra payment gateway.
-Version: 0.0.1
+Version: 1.0.0
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
