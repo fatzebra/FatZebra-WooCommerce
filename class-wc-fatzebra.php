@@ -35,10 +35,11 @@ function fz_init() {
 	        $this->icon 		= apply_filters('woocommerce_fatzebra_icon', '');
 	        $this->has_fields 	= true;
 	        $this->method_title = __( 'Fat Zebra', 'woocommerce' );
-
-      		$this->api_version = "1.0";
+		
+      		$this->api_version  = "1.0";
 			$this->live_url 	= "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
-			$this->sandbox_url	= "https://sandbox.gateway.fatzebra.com.au/v{$this->api_version}/purchases";
+			$this->sandbox_url	= "https://gateway.sandbox.fatzebra.com.au/v{$this->api_version}/purchases";
+
 			$this->params 		= array();
 			
 			// Load the form fields.
@@ -197,19 +198,15 @@ function fz_init() {
 			global $woocommerce;
 
 			$order = new WC_Order( $order_id );
-			$sandbox_mode = $this->settings["sandbox_mode"];
-			$test_mode = $this->settings["test_mode"];
+			$sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
+			$test_mode = $this->settings["test_mode"] == "yes";
 			$this->params["reference"] = (string)$order_id;
 			$this->params["amount"] = (int)($order->order_total * 100);
-			// $this->params["test"] = $test_mode; // This will be available in the next public release of the API
+			$this->params["test"] = $test_mode;
 
 			$order_text = json_encode($this->params);
 
-			if ($sandbox_mode == 1) {
-				$url = $this->sandbox_url;
-			} else {
-				$url = $this->live_url;
-			}
+			$url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
 			
 			$args = array(
 				'method' => 'POST',
