@@ -78,13 +78,26 @@ function fz_init() {
 								'title' => __( 'Test Mode', 'woocommerce' ), 
 								'type' => 'checkbox', 
 								'description' => __( 'Switches the gateway to live mode.', 'woocommerce' ), 
-								'default' => true
+								'default' => "yes"
 							),
 				'sandbox_mode' => array(
 								'title' => __( 'Sandbox Mode', 'woocommerce'),
 								'type' => "checkbox",
 								'description' => 'Switches the gateway URL to the sandbox URL',
-								'default' => true
+								'default' => "yes"
+							),
+				'show_logo' => array(
+								'title' => __("Show Fat Zebra Logo", 'woocommerce'),
+								'type' => 'checkbox',
+								'description' => "Shows or hides the 'Fat Zebra Cerfified' logo on the payment form",
+								'default' => "yes"
+							),
+				'show_card_logos' => array(
+								'title' => __("Show credit card logos", 'woocommerce'),
+								'type' => 'multiselect',
+								'description' => "Shows or hides the credit card icons (AMEX, Visa, Discover, JCB etc)",
+								'default' => "yes",
+								"options" => array("visa" => "VISA", "mastercard" => "MasterCard", "american_express" => "AMEX", "jcb" => "JCB"), //, "diners_club" => "Diners", "discover" => "Discover")
 							),
 				'username' => array(
 								'title' => __("Gateway Username", "woocommerce"),
@@ -123,7 +136,18 @@ function fz_init() {
 	    } // End admin_options()
 
 		function payment_fields() {
+			$image_path = WP_PLUGIN_URL . "/woocommerce-fat-zebra-gateway/images";
+			$logo_url = $image_path . "/Fat-Zebra-Certified-small.png";
+
 			?>
+
+			<?php if ($this->settings["show_logo"] == "yes"): ?>
+				<div class="logo" style="float: right; margin-top: -50px;">
+					<a href="https://www.fatzebra.com.au/?rel=logo" title="Fat Zebra Certified" target="_blank">
+						<img src="<?php echo $logo_url; ?>" alt="Fat Zebra Certified" border="0" />
+					</a>
+				</div>
+			<?php endif; ?>
 			<p class="form-row">
 				<label for="cardholder">
 					<?php _e("Full Name", "woocommerce"); ?>
@@ -138,6 +162,11 @@ function fz_init() {
 					<abbr class="required" title="required">*</abbr>
 				</label>
 				<input type="text" name="cardnumber" id="cardnumber" style="width: 100%;" />
+				<?php if ($this->settings["show_card_logos"]): ?>
+					<?php foreach($this->settings["show_card_logos"] as $position => $type): ?>
+						<img src="<?php echo $image_path . "/" . strtolower($type) . "_32.png"; ?>" alt="<?php echo $type; ?>" class="card_logo" id="card_<?php echo strtolower($type); ?>" />
+					<?php endforeach; ?>
+				<?php endif; ?>
 			</p>
 
 			<p class="form-row form-row-last">
@@ -156,6 +185,31 @@ function fz_init() {
 				<input type="text" id="card_expiry_month" name="card_expiry_month" placeholder="<?php echo date("m"); ?>" style="width: 50px; margin-right: 0;" /> / 
 				<input type="text" id="card_expiry_year" name="card_expiry_year" placeholder="<?php echo date("Y"); ?>" style="width: 70px;"/>
 			</p>
+
+			<script type="text/javascript">
+				jQuery(function() {
+					jQuery("#cardnumber").live("keyup", function() {
+						var value = jQuery(this).val();
+						if(value.length === 0) return;
+
+						var card_id;
+						if(value.match(/^4/)) card_id = "card_visa";
+						if(value.match(/^5/)) card_id = "card_mastercard";
+						if(value.match(/^(34|37)/)) card_id = "card_american_express";
+						if(value.match(/^(36)/)) card_id = "card_diners_club";
+						if(value.match(/^(35)/)) card_id = "card_jcb";
+						if(value.match(/^(65)/)) card_id = "card_discover";
+
+						jQuery("img.card_logo").each(function() {
+							if(jQuery(this).attr("id") != card_id) {
+								jQuery(this).css({opacity: 0.5});
+							} else {
+								jQuery(this).css({opacity: 1.0});
+							}
+						});
+					});
+				});
+			</script>
 			<?	
 		}
 		
