@@ -95,7 +95,7 @@ function fz_init() {
 				'show_card_logos' => array(
 								'title' => __("Show credit card logos", 'woocommerce'),
 								'type' => 'multiselect',
-								'description' => "Shows or hides the credit card icons (AMEX, Visa, Discover, JCB etc)",
+								'description' => "Shows or hides the credit card icons (AMEX, Visa, Discover, JCB etc). <a href=\"http://www.iconshock.com/credit-card-icons/\">Credit Card Icons by iconshock</a>",
 								'default' => "yes",
 								"options" => array("visa" => "VISA", "mastercard" => "MasterCard", "american_express" => "AMEX", "jcb" => "JCB"), //, "diners_club" => "Diners", "discover" => "Discover")
 							),
@@ -281,7 +281,6 @@ function fz_init() {
 				}
 
 				$this->response_data = json_decode($this->response['body']);
-				error_log(print_r($this->response_data->response, true));
 
 
 				if ($this->response_data->successful != 1) {
