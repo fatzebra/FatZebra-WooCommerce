@@ -509,6 +509,9 @@ function fz_init() {
     } else {
       // We're all good - update the notes, change status to payment complete and send invoice.
       $order->add_order_note("Fat Zebra payment complete. Reference: " . $result["transaction_id"]);
+      
+      if(isset($_POST['order_status'])) unset($_POST['order_status']);
+      
       $order->payment_complete();
       
       do_action( 'woocommerce_before_send_customer_invoice', $order );
