@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.2.0
+Version: 1.3.0
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -35,7 +35,7 @@ function fz_init() {
       $this->icon         = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra', 'woocommerce' );
-      $this->version      = "1.1";
+      $this->version      = "1.3";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -44,7 +44,7 @@ function fz_init() {
       $this->params       = array();
       
       // Define user set variables
-      $this->title        = in_array("title", $this->settings) ? $this->settings['title'] : "";
+      $this->title        = "Credit Card";
       $this->description  = in_array("description", $this->settings) ? $this->settings['description'] : "";
 
       // Load the form fields.
@@ -56,6 +56,7 @@ function fz_init() {
       // Actions
       add_action('woocommerce_update_options_payment_gateways', array(&$this, 'process_admin_options'));
       add_action('scheduled_subscription_payment_fatzebra', array(&$this, 'scheduled_subscription_payment'), 10, 3);
+      add_action('woocommerce_order_actions', array(&$this, 'add_process_deferred_payment_button'), 99, 1);
     } 
       
     /**
@@ -70,12 +71,6 @@ function fz_init() {
               'label' => __( 'Enable Fat Zebra', 'woocommerce' ), 
               'default' => 'yes'
             ), 
-      'title' => array(
-              'title' => __( 'Title', 'woocommerce' ), 
-              'type' => 'text', 
-              'description' => __( 'This controls the title which the user sees during checkout.', 'woocommerce' ), 
-              'default' => __( 'Fat Zebra', 'woocommerce' )
-            ),
       'test_mode' => array(
               'title' => __( 'Test Mode', 'woocommerce' ), 
               'type' => 'checkbox', 
@@ -85,13 +80,13 @@ function fz_init() {
       'sandbox_mode' => array(
               'title' => __( 'Sandbox Mode', 'woocommerce'),
               'type' => "checkbox",
-              'description' => 'Switches the gateway URL to the sandbox URL',
+              'description' => __('Switches the gateway URL to the sandbox URL', "woocommerce"),
               'default' => "yes"
             ),
       'show_logo' => array(
               'title' => __("Show Fat Zebra Logo", 'woocommerce'),
               'type' => 'checkbox',
-              'description' => "Shows or hides the 'Fat Zebra Cerfified' logo on the payment form",
+              'description' => __("Shows or hides the 'Fat Zebra Cerfified' logo on the payment form", "woocommerce"),
               'default' => "yes"
             ),
       'show_card_logos' => array(
@@ -112,9 +107,15 @@ function fz_init() {
               'type' => "text",
               'description' => __("The Gateway Authentication Token", "woocommerce"),
               'default' => "test"
-            )
+            ),
+      'deferred_payments' => array(
+        'title' => __("Enable Deferred Payments", "woocommerce"),
+        'type' => 'checkbox',
+        'description' => __("Deferred payments enable you to capture the customers card details in Fat Zebra's system and process them at a later date (for example, once you have reviewed the order for high-risk products). Note: Deferred Payments cannot be used with WooCommerce Subscription - any subscriptions will be processed in Real Time.", "woocommerce"),
+        'default' => 'no'
+        )
       );  
-      
+          
     } // End init_form_fields()
       
     /**
@@ -260,10 +261,14 @@ function fz_init() {
      **/
     function process_payment( $order_id ) {
       global $woocommerce;
+      
+      $defer_payment = $this->settings["deferred_payments"] == "yes";
 
       $order = new WC_Order( $order_id ); 
 
-      if (WC_Subscriptions_Order::order_contains_subscription($order)) {
+      if (class_exists("WC_Subscriptions_Order") && WC_Subscriptions_Order::order_contains_subscription($order)) {
+        // No deferred payments for subscriptions.
+        $defer_payment = false;
         // Charge sign up fee + first period here..
         // Periodic charging should happen via scheduled_subscription_payment_fatzebra
         $sign_up_fee = WC_Subscriptions_Order::get_sign_up_fee($order);
@@ -276,6 +281,7 @@ function fz_init() {
 
       $this->params["reference"] = (string)$order_id;
       $this->params["test"] = $test_mode;
+      $this->params["deferred"] = $defer_payment;
 
       $result = $this->do_payment($this->params);
 
@@ -310,11 +316,19 @@ function fz_init() {
         return;
 
       } else { // Success! Returned is an array with the transaction ID etc
-        $order->add_order_note(__("Fat Zebra payment complete. Reference: " . $result["transaction_id"]));
-        $order->payment_complete();
+        // For a deferred payment we set the status to on-hold and then add a detailed note for review.
+        if ($defer_payment) {
+          $date = new DateTime($result["card_expiry"], new DateTimeZone("Australia/Sydney"));
+          $note = "Deferred Payment:<ul><li>Card Token: " . $result["card_token"] . "</li><li>Card Holder: " . $result["card_holder"] . "</li><li>Card Number: " . $result["card_number"] . "</li><li>Expiry: " . $date->format("m/Y") . "</li></ul>";
+          $order->update_status("on-hold", $note);
+          add_post_meta($order_id, "_fatzebra_card_token", $result["card_token"]);
+        } else {
+          $order->add_order_note(__("Fat Zebra payment complete. Reference: " . $result["transaction_id"]));
+          $order->payment_complete();
         
-        // Store the card token as post meta
-        add_post_meta($order_id, "_fatzebra_card_token", $result["card_token"]);
+          // Store the card token as post meta
+          add_post_meta($order_id, "_fatzebra_card_token", $result["card_token"]);
+  }
         $woocommerce->cart->empty_cart();
         unset($_SESSION['order_awaiting_payment']);
 
@@ -344,6 +358,7 @@ function fz_init() {
       $this->params["reference"] = $order->id . "-" . date("dmY"); // Reference for order ID 123 will become 123-01022012
       $this->params["card_token"] = get_post_meta($order->id, "_fatzebra_card_token", true);
       $this->params["customer_ip"] = "Recurring";
+      $this->params["deferred"] = false;
 
       $result = $this->do_payment($this->params);
    
@@ -366,10 +381,18 @@ function fz_init() {
       $sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
       $test_mode = $this->settings["test_mode"] == "yes";
       
-      $order_text = json_encode($this->params);
+      $order_text = json_encode($params);
 
       $url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
       
+      // Deferred payments need to post to the /credit_cards endpoint.
+      if (isset($params["deferred"]) && $params["deferred"]) {
+        // Replace the URL with the tokenize method and re-create the order text (json payload)
+        $url = str_replace("purchases", "credit_cards", $url);
+        $payload = array("card_holder" => $params["card_holder"], "card_number" => $params["card_number"], "card_expiry" => $params["card_expiry"], "cvv" => $params["cvv"]);
+        $order_text = json_encode($payload);
+      }
+
       $args = array(
         'method' => 'POST',
         'body' => $order_text,
@@ -379,7 +402,7 @@ function fz_init() {
           'User-Agent' => "WooCommerce Plugin " . $this->version
         ),
         'timeout' => 30
-      );
+      ); 
       try {
         $this->response = (array)wp_remote_request($url, $args);
 
@@ -399,6 +422,11 @@ function fz_init() {
           return $error;
         }
 
+        // If we are doing a deferred payments we override the data here.
+        if (isset($params["deferred"]) && $params["deferred"]) {
+          return array("card_token" => $this->response_data->response->token, "card_number" => $this->response_data->response->card_number, "card_expiry" => $this->response_data->response->card_expiry, "card_holder" => $this->response_data->response->card_holder);
+        }
+
         if (!$this->response_data->response->successful) {
           $error = new WP_Error();
           $error->add(3, "Payment Declined", array("message" => $this->response_data->response->message, "id" => $this->response_data->response->id));
@@ -415,6 +443,14 @@ function fz_init() {
         return $error;
       }
     }
+
+    // Add the 'Charge Card' button if the order is on-hold
+    function add_process_deferred_payment_button($order_id) {
+      $order = new WC_Order($order_id);
+      if ($order->status == "on-hold") {
+        echo '<li><input type="submit" class="button tips" name="process" value="Charge Card" data-tip="Attemptes to process a deferred payment" /></li>';
+      }
+    }
   }
 
   /**
@@ -424,6 +460,66 @@ function fz_init() {
     $methods[] = 'WC_FatZebra'; return $methods;
   }
 
+  // Attempt to process the deferred payment. This is called when you press the 'Charge card' button on the order page.
+  function attempt_deferred_payment($post_id, $post) {
+    global $wpdb, $woocommerce, $woocommerce_errors;
+   
+    // Bail if we don't have anything to do.
+    if (!isset($_POST['process'])) return;
+    $order = new WC_Order($post_id);
+    if ($order->status != "on-hold") return;
+ 
+    $gateways = $woocommerce->payment_gateways->get_available_payment_gateways();
+    $gateway = $gateways['fatzebra'];
+
+    // Build the params for the payment
+    $params = array("card_token" => get_post_meta($post_id, "_fatzebra_card_token", true), "amount" => (int)($order->order_total * 100), "reference" => $order->id, "customer_ip" => get_post_meta($post_id, "Customer IP Address", true));
+
+    // Do the payment and handle the result.
+    $result = $gateway->do_payment($params);
+    if (is_wp_error($result)) {
+      switch($result->get_error_code()) {
+        case 1: // Non-200 response, so failed... (e.g. 401, 403, 500 etc).
+          $order->add_order_note($result->get_error_message());
+          $woocommerce->add_error($result->get_error_message());
+        break;
+        
+        case 2: // Gateway error (data etc)
+          $errors = $result->get_error_data();
+          foreach($errors as $error) {
+            $order->add_order_note("Gateway Error: " . $error); 
+          }
+        
+          $woocommerce->add_error("Payment Failed: Unspecific Gateway Error.");
+          break;
+
+        case 3: // Declined - error data is array with keys: message, id
+          $order->add_order_note(__("Payment Declined: " . $this->response_data->response->message . ". Reference: " . $this->response_data->response->transaction_id));
+          $woocommerce->add_error("Payment declined: " . $this->response_data->response->message);
+          return;
+        break;
+
+        case 4: // Exception caught, something bad happened. Data is exception
+        default:
+          $woocommerce->add_error("Unknown error.");
+          $order->add_order_note(__("Unknown Error (exception): " . print_r($result->get_error_data(), true)));
+          break;
+      }
+      return; 
+    } else {
+      // We're all good - update the notes, change status to payment complete and send invoice.
+      $order->add_order_note("Fat Zebra payment complete. Reference: " . $result["transaction_id"]);
+      $order->payment_complete();
+      
+      do_action( 'woocommerce_before_send_customer_invoice', $order );
+
+      $mailer = $woocommerce->mailer();
+      $mailer->customer_invoice( $order );
+
+      do_action( 'woocommerce_after_send_customer_invoice', $order );
+    }
+  }
+
   add_filter('woocommerce_payment_gateways', 'add_fz_gateway' );
+  add_action('woocommerce_process_shop_order_meta', 'attempt_deferred_payment', 1, 2);
 }
-?>
