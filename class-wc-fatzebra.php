@@ -513,13 +513,6 @@ function fz_init() {
       if(isset($_POST['order_status'])) unset($_POST['order_status']);
       
       $order->payment_complete();
-      
-      do_action( 'woocommerce_before_send_customer_invoice', $order );
-
-      $mailer = $woocommerce->mailer();
-      $mailer->customer_invoice( $order );
-
-      do_action( 'woocommerce_after_send_customer_invoice', $order );
     }
   }
 
