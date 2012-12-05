@@ -357,14 +357,15 @@ function fz_init() {
       $this->params["test"] = $test_mode;
       $this->params["reference"] = $order->id . "-" . date("dmY"); // Reference for order ID 123 will become 123-01022012
       $this->params["card_token"] = get_post_meta($order->id, "_fatzebra_card_token", true);
-      $this->params["customer_ip"] = "Recurring";
+      $this->params["customer_ip"] = get_post_meta($post_id, "Customer IP Address", true);
       $this->params["deferred"] = false;
 
       $result = $this->do_payment($this->params);
    
       if(is_wp_error( $result )) {
         $response = $result->get_error_data();
-        $order->add_order_note(__("Subscription Payment Failed: " . $response->response->message . ". Transaction ID: " . $response->response->id, WC_Subscriptions::$text_domain));
+        error_log("Response: " . print_r($response, true));
+        $order->add_order_note(__("Subscription Payment Failed: " . $response[0], WC_Subscriptions::$text_domain));
         WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $order, $product_id );
       } else {
         // Add a note to the order
