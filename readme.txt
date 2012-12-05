@@ -41,7 +41,7 @@ There are two methods to install the plugin:
 == Configuration ==
 
 1. Visit the WooCommerce settings page, and click on the Payment Gateways tab.
-2. Click on Fat Zebra to edit the settings. If you do not see Fat Zebra in the list at the top of the screen make sure you have activated the plugin in the WordPress Plugin Manager.
+2. Click on Fat Zebra to edit the settings. If you do not see Fat Zebra in the list at the top of the screen make sure you have activated the plug in in the WordPress Plug in Manager.
 3. Enable the Payment Method, name it Credit Card (this will show up on the payment page your customer sees) and add in your credentials. Click Save.
 4. Optional: Display the Fat Zebra logo on your checkout page - we will love you forever if you choose this option.
 
@@ -55,6 +55,17 @@ You should now be able to test the purchases via Fat Zebra.
 = 1.0.2 =
 * Added support for Fat Zebra logo and credit card icons
 * Removed error tracing accidentally left in
+
+= 1.3.0 =
+* Added support for 'deferred' payments where card details can be authorized but processed after manual review.
+* Fixed bug with reference to WooCommerce Subscriptions when the extension is not installed.
+
+= 1.3.1 =
+* Disabled emails when charging card - emails should be triggered manually by the store owner
+
+= 1.3.2 =
+* Fixed issue with subscription transactions not sending valid IP.
+* Fixed general typo.
 
 == Support ==
 
