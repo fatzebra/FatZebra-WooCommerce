@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.3.1
+Version: 1.3.2
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -40,7 +40,7 @@ function fz_init() {
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
       $this->sandbox_url  = "https://gateway.sandbox.fatzebra.com.au/v{$this->api_version}/purchases";
-      $this->supports     = array( 'subscriptions', 'products' );
+      $this->supports     = array( 'subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension' );
       $this->params       = array();
       
       // Define user set variables
@@ -86,7 +86,7 @@ function fz_init() {
       'show_logo' => array(
               'title' => __("Show Fat Zebra Logo", 'woocommerce'),
               'type' => 'checkbox',
-              'description' => __("Shows or hides the 'Fat Zebra Cerfified' logo on the payment form", "woocommerce"),
+              'description' => __("Shows or hides the 'Fat Zebra Certified' logo on the payment form", "woocommerce"),
               'default' => "yes"
             ),
       'show_card_logos' => array(
@@ -357,15 +357,16 @@ function fz_init() {
       $this->params["test"] = $test_mode;
       $this->params["reference"] = $order->id . "-" . date("dmY"); // Reference for order ID 123 will become 123-01022012
       $this->params["card_token"] = get_post_meta($order->id, "_fatzebra_card_token", true);
-      $this->params["customer_ip"] = get_post_meta($post_id, "Customer IP Address", true);
+      $ip = get_post_meta($post_id, "Customer IP Address", true);
+      if(empty($ip)) $ip = "127.0.0.1";
+      $this->params["customer_ip"] = $ip;
       $this->params["deferred"] = false;
 
       $result = $this->do_payment($this->params);
    
       if(is_wp_error( $result )) {
         $response = $result->get_error_data();
-        error_log("Response: " . print_r($response, true));
-        $order->add_order_note(__("Subscription Payment Failed: " . $response[0], WC_Subscriptions::$text_domain));
+        $order->add_order_note(__("Subscription Payment Failed: " . $response->response->message . ". Transaction ID: " . $response->response->id, WC_Subscriptions::$text_domain));
         WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $order, $product_id );
       } else {
         // Add a note to the order
@@ -495,8 +496,8 @@ function fz_init() {
           break;
 
         case 3: // Declined - error data is array with keys: message, id
-          $order->add_order_note(__("Payment Declined: " . $this->response_data->response->message . ". Reference: " . $this->response_data->response->transaction_id));
-          $woocommerce->add_error("Payment declined: " . $this->response_data->response->message);
+          $order->add_order_note(__("Payment Declined: " . $result->response->message . ". Reference: " . $result->response->transaction_id));
+          $woocommerce->add_error("Payment declined: " . $result->response->message);
           return;
         break;
 
