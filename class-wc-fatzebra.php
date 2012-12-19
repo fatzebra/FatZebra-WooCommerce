@@ -141,7 +141,7 @@ function fz_init() {
       ?>
 
       <?php if ($this->settings["show_logo"] == "yes"): ?>
-        <div class="logo" style="float: right; margin-top: -50px;">
+        <div id="fatzebra-logo">
           <a href="https://www.fatzebra.com.au/?rel=logo" title="Fat Zebra Certified" target="_blank">
             <img src="<?php echo $logo_url; ?>" alt="Fat Zebra Certified" border="0" />
           </a>
@@ -170,10 +170,21 @@ function fz_init() {
 
       <p class="form-row form-row-last">
         <label for="card_expiry_month">
-          <?php _e("CVV", "woocommerce"); ?>
+          <?php _e("Security Code", "woocommerce"); ?>
           <abbr class="required" title="required">*</abbr>
+          <a href="#security-code-details" id="what-is-security-code"><img src="<?php echo $image_path . "/question_mark.png"; ?>" alt="What is the security code?"/></a>
         </label>
         <input type="text" id="card_cvv" name="card_cvv" placeholder="123" />
+        <div id="security-code-details" style="display: none;">
+          <a href="#" class="modal_close">&times;</a>
+          <h3>Card Security Code</h3>
+          <img src="<?php echo $image_path . "/security-codes.png"; ?>" alt="Card Security Code Locations" />
+          <p>Your Card Security Code (also known as CVV, CSC or CV2) is a 3 or 4 digit number found in the following locations:</p>
+          <h4>VISA/MasterCard</h4>
+          <p>The security code is the three digit number on the back of your credit card in the signature panel.</p>
+          <h4>American Express/JCB</h4>
+          <p>The security code is the 4 digit number on the front of your card, just above and to the right of your credit card number.</p>         
+        </div>
       </p>
       <div class="clear"></div>
       <p class="form-row">
@@ -185,8 +196,13 @@ function fz_init() {
         <input type="text" id="card_expiry_year" name="card_expiry_year" placeholder="<?php echo date("Y"); ?>" style="width: 70px;"/>
       </p>
 
+      <script type='text/javascript' src='<?php echo $image_path . "/jquery.leanModal.min.js"; ?>'></script>
       <script type="text/javascript">
         jQuery(function() {
+          setTimeout(function() {
+            jQuery("#what-is-security-code").leanModal({closeButton: ".modal_close"});
+          }, 500);
+
           jQuery("#cardnumber").live("keyup", function() {
             var value = jQuery(this).val();
             if(value.length === 0) return;
@@ -209,6 +225,50 @@ function fz_init() {
           });
         });
       </script>
+      <style type='text/css'>
+        #lean_overlay {
+          position: fixed;
+          z-index:100;
+          top: 0px;
+          left: 0px;
+          height:100%;
+          width:100%;
+          background: #000;
+          display: none;
+        }
+
+        #security-code-details {
+          width: 500px;
+          height: 250px;
+          background-color: #fff;
+          padding: 20px;
+        }
+
+        #security-code-details img {
+          float: right;
+          margin: 10px;
+          margin-top: 20px;
+        }
+
+        #security-code-details h4, #security-code-details h3 {
+          display: inline-block;
+          font-weight: bold;
+        }
+
+        #security-code-details .modal_close {
+          float: right;
+          margin-top: -10px;
+          margin-right: -10px;
+          margin-left: 10px;
+          text-decoration: none;
+          color: #000;
+        }
+
+        #fatzebra-logo {
+          float: right; 
+          margin-bottom: -50px;
+        }
+      </style>
       <?  
     }
     
@@ -282,7 +342,12 @@ function fz_init() {
       $this->params["reference"] = (string)$order_id;
       $this->params["test"] = $test_mode;
       $this->params["deferred"] = $defer_payment;
-
+      
+      // Ensure validation has run - this is where the params are set
+      // This isn't called when a wc subscription renewal order is being paid for, so we trigger it here
+      $this->validate_fields();
+      if(!$this->valid) return;
+      
       $result = $this->do_payment($this->params);
 
       if (is_wp_error($result)) {
@@ -297,7 +362,7 @@ function fz_init() {
             foreach($errors as $error) {
               $order->add_order_note("Gateway Error: " . $error); 
             }
-          
+            error_log("WooCommerce Fat Zebra - Gateway Error: " . print_r($errors, true));
             $woocommerce->add_error("Payment Failed: Unspecific Gateway Error.");
             break;
 
@@ -328,7 +393,7 @@ function fz_init() {
         
           // Store the card token as post meta
           add_post_meta($order_id, "_fatzebra_card_token", $result["card_token"]);
-  }
+        }
         $woocommerce->cart->empty_cart();
         unset($_SESSION['order_awaiting_payment']);
 
@@ -364,14 +429,44 @@ function fz_init() {
 
       $result = $this->do_payment($this->params);
    
-      if(is_wp_error( $result )) {
-        $response = $result->get_error_data();
-        $order->add_order_note(__("Subscription Payment Failed: " . $response->response->message . ". Transaction ID: " . $response->response->id, WC_Subscriptions::$text_domain));
+      
+
+      if (is_wp_error($result)) {
+        $error = "";
+        $txn_id = "None";
+        switch($result->get_error_code()) {
+          case 1: // Non-200 response, so failed... (e.g. 401, 403, 500 etc).
+            $error = $result->get_error_message();
+          break;
+          
+          case 2: // Gateway error (data etc)
+            $errors = $result->get_error_data();
+            $error = implode(", ", $errors);
+            error_log("WooCommerce Fat Zebra - Gateway Error: " . print_r($errors, true));
+            break;
+
+          case 3: // Declined - error data is array with keys: message, id
+            $error = $this->response_data->response->message;
+            $txn_id = $this->response_data->response->transaction_id;
+            return;
+          break;
+
+          case 4: // Exception caught, something bad happened. Data is exception
+          default:
+            $error = "Unknown - Error - See error log";
+            error_log("WC Fat Zebra (Subscriptions) - Unknown Error (exception): " . print_r($result->get_error_data(), true));
+            break;
+        }
+        
+        // Add the error details and return
+        $order->add_order_note(__("Subscription Payment Failed: " . $error . ". Transaction ID: " . $txn_id, WC_Subscriptions::$text_domain));
         WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $order, $product_id );
-      } else {
+
+      } else { // Success! Returned is an array with the transaction ID etc
+        // Update the subscription and return
         // Add a note to the order
         $order->add_order_note(__("Subscription Payment Successful. Transaction ID: " . $result["transaction_id"], WC_Subscriptions::$text_domain));
-        WC_Subscriptions_Manager::process_subscription_payments_on_order( $order );
+        WC_Subscriptions_Manager::process_subscription_payments_on_order( $order );        
       }
     }
 
@@ -491,7 +586,7 @@ function fz_init() {
           foreach($errors as $error) {
             $order->add_order_note("Gateway Error: " . $error); 
           }
-        
+          error_log("WooCommerce Fat Zebra - Unknown error: " . print_r($errors, true)); 
           $woocommerce->add_error("Payment Failed: Unspecific Gateway Error.");
           break;
 
