@@ -67,6 +67,10 @@ You should now be able to test the purchases via Fat Zebra.
 * Fixed issue with subscription transactions not sending valid IP.
 * Fixed general typo.
 
+= 1.3.3 =
+* Added help icon for security code
+* Removed style for logo and added CSS in style block to allow for override.
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.
