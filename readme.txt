@@ -16,7 +16,7 @@ Support has now been added for WooCommerce Subscriptions, allowing you to create
 
 ![WooCommerce Subscriptions](http://wcdocs.woothemes.com/wp-content/uploads/2012/06/supports-subscriptions-badge.png)
 
-Tested with WooCommerce version 1.6.
+Tested with WooCommerce version 1.6 and 2.0.2.
 
 Visit [https://www.fatzebra.com.au](https://www.fatzebra.com.au "Fat Zebra Online Payment Gateway") for more details on using Fat Zebra.
 
@@ -73,6 +73,9 @@ You should now be able to test the purchases via Fat Zebra.
 
 = 1.3.4 = 
 * Fixed lazy PHP tag (<?) causing issues in PHP 5.3.3
+
+= 1.3.5 =
+* Fixed support for 2.0 and tested on both 2.0 and 1.6
 
 == Support ==
 

@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.3.4
+Version: 1.3.5
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -26,7 +26,13 @@ Author URI: https://www.fatzebra.com.au
 add_action('plugins_loaded', 'fz_init', 0);
  
 function fz_init() {
-  if ( !class_exists( 'woocommerce_payment_gateway' ) ) { return; }
+  if ( !class_exists( 'WC_Payment_Gateway' ) ) { ?>
+    <div id="message" class="error">
+      <p><?php printf( __( '%sWooCommerce Fat Zebra Extension is inactive.%s The %sWooCommerce plugin%s must be active for the WooCommerce Subscriptions to work. Please %sinstall & activate WooCommerce%s',  'wc_fatzebra'), '<strong>', '</strong>', '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>', '<a href="' . admin_url( 'plugins.php' ) . '">', '&nbsp;&raquo;</a>' ); ?></p>
+    </div>
+    <?php
+    return;
+  }
 
   class WC_FatZebra extends WC_Payment_Gateway {
       
@@ -35,7 +41,7 @@ function fz_init() {
       $this->icon         = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra', 'woocommerce' );
-      $this->version      = "1.3.4";
+      $this->version      = "1.3.5";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -54,7 +60,8 @@ function fz_init() {
       $this->init_settings();
         
       // Actions
-      add_action('woocommerce_update_options_payment_gateways', array(&$this, 'process_admin_options'));
+      add_action('woocommerce_update_options_payment_gateways', array(&$this, 'process_admin_options')); // < 2.0
+      add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) ); //> 2.0
       add_action('scheduled_subscription_payment_fatzebra', array(&$this, 'scheduled_subscription_payment'), 10, 3);
       add_action('woocommerce_order_actions', array(&$this, 'add_process_deferred_payment_button'), 99, 1);
     } 
@@ -93,7 +100,7 @@ function fz_init() {
               'title' => __("Show credit card logos", 'woocommerce'),
               'type' => 'multiselect',
               'description' => "Shows or hides the credit card icons (AMEX, Visa, Discover, JCB etc). <a href=\"http://www.iconshock.com/credit-card-icons/\">Credit Card Icons by iconshock</a>",
-              'default' => "yes",
+              'default' => array("visa", "mastercard"),
               "options" => array("visa" => "VISA", "mastercard" => "MasterCard", "american_express" => "AMEX", "jcb" => "JCB"), //, "diners_club" => "Diners", "discover" => "Discover")
             ),
       'username' => array(
@@ -127,7 +134,7 @@ function fz_init() {
     public function admin_options() {
       ?>
       <h3><?php _e('Fat Zebra', 'woocommerce'); ?></h3>
-      <p><?php _e('Allows Fat Zebra Pyaments. ', 'woocommerce'); ?></p>
+      <p><?php _e('Allows Fat Zebra Payments. ', 'woocommerce'); ?></p>
       <table class="form-table">
         <?php $this->generate_settings_html(); ?>
       </table>
