@@ -77,6 +77,9 @@ You should now be able to test the purchases via Fat Zebra.
 = 1.3.5 =
 * Fixed support for 2.0 and tested on both 2.0 and 1.6
 
+= 1.3.6 = 
+* Updated supports attributes to allow for amount changes, removing the notification when viewing/editing an order.
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.
