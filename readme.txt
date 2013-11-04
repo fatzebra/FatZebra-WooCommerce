@@ -80,6 +80,17 @@ You should now be able to test the purchases via Fat Zebra.
 = 1.3.6 = 
 * Updated supports attributes to allow for amount changes, removing the notification when viewing/editing an order.
 
+= 1.4.0 =
+* Fixed warning regarding changing subscription amount
+* Added support for updating the subscription payment details
+* Fixed up the rendering of the credit card form
+* Updated image rendering to use the plugins_url method call in order to work properly with HTTPS etc
+* Added support for tokenizing only if a subscription has a $0 initial payment amount
+* Added the ability to create a new subscription and copy over the Fat Zebra card token
+* The Fat Zebra card token is now stored as fatzebra_card_token, instead of _fatzebra_card_token, allowing it to be set by the store owner if necessary
+* Added script referencecs instead of inlining JS etc.
+* Default IP to 127.0.0.1 if not set in the order meta.
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.
