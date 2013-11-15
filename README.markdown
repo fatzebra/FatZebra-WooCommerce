@@ -1,7 +1,7 @@
 Fat Zebra WooCommerce Plugin
 ============================
 
-Version 1.4.0 for API Version 1.0
+Version 1.4.1 for API Version 1.0
 
 A WordPress plugin to add Fat Zebra support to [WooCommerce](http://www.woothemes.com/woocommerce/) for Australian Merchants.
 
