@@ -91,6 +91,10 @@ You should now be able to test the purchases via Fat Zebra.
 * Added script referencecs instead of inlining JS etc.
 * Default IP to 127.0.0.1 if not set in the order meta.
 
+= 1.4.1 =
+* Added support for MasterPass checkout
+* Added script to convert 2-digit date to 4-digit date on blur automatically
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.

@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.4.0
+Version: 1.4.1
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -34,6 +34,9 @@ function fz_init() {
     return;
   }
 
+  include("class-wc-fatzebra-masterpass.php");
+  fz_masterpass_init();
+
   class WC_FatZebra extends WC_Payment_Gateway {
 
     public function __construct() {
@@ -41,7 +44,7 @@ function fz_init() {
       $this->icon         = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra', 'woocommerce' );
-      $this->version      = "1.4.0";
+      $this->version      = "1.4.1";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -150,21 +153,13 @@ function fz_init() {
 
       <?php if ($this->settings["show_logo"] == "yes"): ?>
         <div id="fatzebra-logo">
-          <a href="https://www.fatzebra.com.au/?rel=logo" title="Fat Zebra Certified" target="_blank">
-            <img src="<?php echo $logo_url; ?>" alt="Fat Zebra Certified" border="0" style="border: none;" />
+          <a href="https://www.fatzebra.com.au/?rel=logo" title="Fat Zebra Certified" target="_blank" tabindex="-1">
+            <img src="<?php echo $logo_url; ?>" alt="Fat Zebra Certified" border="0" style="border: none;" tabindex="-1"/>
           </a>
         </div>
       <?php endif; ?>
       <p>Pay online securely with your credit card.</p>
       <fieldset>
-
-        <p class="form-row">
-          <label for="cardholder">
-            <?php _e("Full Name", "woocommerce"); ?>
-            <abbr class="required" title="required">*</abbr>
-          </label>
-          <input type="text" name="cardholder" id="cardholder" placeholder="<?php _e("Card Holder", "woocommerce"); ?>" class="input-text"/>
-        </p>
         <div class="clear"></div>
         <p class="form-row cardnumber-row">
           <label for="cardnumber">
@@ -283,12 +278,10 @@ function fz_init() {
     function validate_fields() {
       global $woocommerce;
 
-      if(empty($_POST['cardholder']))
-        $woocommerce->add_error(__("Cardholder required", "woocommerce"));
       if(empty($_POST['cardnumber']))
         $woocommerce->add_error(__("Card Number required", "woocommerce"));
       if(empty($_POST['card_cvv']))
-        $woocommerce->add_error(__("CVV required", "woocommerce"));
+        $woocommerce->add_error(__("Security Code required", "woocommerce"));
       if(empty($_POST['card_expiry_month']))
         $woocommerce->add_error(__("Expiry Month required", "woocommerce"));
       if(empty($_POST['card_expiry_year']))
@@ -314,7 +307,7 @@ function fz_init() {
       if(!$woocommerce->error_count()) {
         // OK Good to go!
         $this->params["card_number"] = $_POST['cardnumber'];
-        $this->params["card_holder"] = $_POST['cardholder'];
+        $this->params["card_holder"] = $_POST['billing_first_name'] . " " . $_POST['billing_last_name'];
         $this->params["cvv"] = $_POST['card_cvv'];
         $this->params["card_expiry"] = $_POST['card_expiry_month'] . "/" . $_POST['card_expiry_year'];
         $this->params["customer_ip"] = $_SERVER['REMOTE_ADDR'];

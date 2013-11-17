@@ -62,5 +62,11 @@ jQuery(function() {
         jQuery(this).css({opacity: 1.0});
       }
     });
+
+    jQuery("#card_expiry_year").live("blur", function() {
+      if(parseInt(jQuery(this).val()) < 100) {
+        jQuery(this).val(2000 + parseInt(jQuery(this).val()));
+      }
+    });
   });
 });
