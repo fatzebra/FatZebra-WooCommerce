@@ -95,6 +95,9 @@ You should now be able to test the purchases via Fat Zebra.
 * Added support for MasterPass checkout
 * Added script to convert 2-digit date to 4-digit date on blur automatically
 
+= 1.4.2 =
+* Bug fix for WooCommerce Subscriptions where the subscription processing hook was being added in twice, resulting in a successful order, and then a failed order due to reference collision.
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.
