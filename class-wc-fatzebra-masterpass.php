@@ -1,14 +1,6 @@
 <?php
 
 function fz_masterpass_init() {
-  if ( !class_exists( 'WC_Payment_Gateway' ) ) { ?>
-    <div id="message" class="error">
-      <p><?php printf( __( '%sWooCommerce Fat Zebra Extension is inactive.%s The %sWooCommerce plugin%s must be active for the WooCommerce Subscriptions to work. Please %sinstall & activate WooCommerce%s',  'wc_fatzebra'), '<strong>', '</strong>', '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>', '<a href="' . admin_url( 'plugins.php' ) . '">', '&nbsp;&raquo;</a>' ); ?></p>
-    </div>
-    <?php
-    return;
-  }
-
   class WC_FatZebra_MasterPass extends WC_Payment_Gateway {
 
     public function __construct() {
@@ -33,7 +25,7 @@ function fz_masterpass_init() {
 
       // Load the form fields.
       $this->init_form_fields();
-      $this->parent       = new WC_FatZebra(); // Allows us to access $this->parent->settings[] for username, token etc
+      $this->init_parent_settings(); // Allows us to access $this->parent_settings[] for username, token etc
 
       // Load the settings.
       $this->init_settings();
@@ -44,6 +36,20 @@ function fz_masterpass_init() {
       add_action('scheduled_subscription_payment_' . $this->id, array(&$this, 'scheduled_subscription_payment'), 10, 3);
 
       add_action( 'woocommerce_api_wc_fatzebra_masterpass' , array( $this, 'check_masterpass_response' ) );
+    }
+
+    /** 
+     * Initializes the parent (WC_FatZebra) settings
+     */
+    function init_parent_settings() {
+      $this->parent_settings = get_option("woocommerce_fatzebra_settings", null);
+      if ( ! $this->parent_settings || ! is_array( $this->parent_settings ) ) {
+        $this->parent_settings = array();
+      }
+
+      if ( $this->parent_settings && is_array( $this->parent_settings ) ) {
+       $this->parent_settings = array_map( array( $this, 'format_settings' ), $this->parent_settings );
+      }
     }
 
     /**
@@ -110,11 +116,11 @@ function fz_masterpass_init() {
         $amount = (int)($order->order_total * 100);
       }
 
-      $page_url = $this->parent->settings["sandbox_mode"] == "yes" ? $this->sandbox_paynow_url : $this->live_paynow_url;
+      $page_url = $this->parent_settings["sandbox_mode"] == "yes" ? $this->sandbox_paynow_url : $this->live_paynow_url;
 
       $_SESSION['masterpass_order_id'] = $order_id;
 
-      $username    = $this->parent->settings["username"];
+      $username    = $this->parent_settings["username"];
       $currency    = get_woocommerce_currency();
       $reference   = (string)$order_id;
 
@@ -275,8 +281,8 @@ function fz_masterpass_init() {
     * @return mixed WP_Error or Array (result)
     */
     function do_payment($params) {
-      $sandbox_mode = $this->parent->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
-      $test_mode = $this->parent->settings["test_mode"] == "yes";
+      $sandbox_mode = $this->parent_settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
+      $test_mode = $this->parent_settings["test_mode"] == "yes";
 
       $order_text = json_encode($params);
 
@@ -299,7 +305,7 @@ function fz_masterpass_init() {
         'method' => 'POST',
         'body' => $order_text,
         'headers' => array(
-          'Authorization' => 'Basic ' . base64_encode($this->parent->settings["username"] . ":" . $this->parent->settings["token"]),
+          'Authorization' => 'Basic ' . base64_encode($this->parent_settings["username"] . ":" . $this->parent_settings["token"]),
           'X-Test-Mode' => $test_mode,
           'User-Agent' => "WooCommerce Plugin " . $this->version
         ),
