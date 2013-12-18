@@ -346,6 +346,10 @@ function fz_init() {
       $this->validate_fields();
       if(!$this->valid) return;
 
+      if (trim($this->params["card_holder"]) == "") { // If the customer is updating their details the $_POST values for name will be missing, so fetch from the order
+        $this->params["card_holder"] = $order->billing_first_name ." ". $order->billing_last_name;
+      }
+
       if ($this->params["amount"] === 0) {
         $result = $this->tokenize_card($this->params);
       } else {
