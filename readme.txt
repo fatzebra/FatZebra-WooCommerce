@@ -98,6 +98,9 @@ You should now be able to test the purchases via Fat Zebra.
 = 1.4.2 =
 * Bug fix for WooCommerce Subscriptions where the subscription processing hook was being added in twice, resulting in a successful order, and then a failed order due to reference collision.
 
+= 1.4.3 =
+* Bug fix to handle missing card holder name when updating payment details for subscriptions
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.
