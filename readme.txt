@@ -1,7 +1,8 @@
 === WooCommerce Fat Zebra Gateway ===
 Contributors: fatzebra
 Tags: ecommerce, woocommerce, fatzebra, payment gateway, australia, subscriptions, wcsubscriptions
-Requires at least: 3.8.1
+Requires at least: 3.8
+Tested up to: 3.8.1
 Stable tag: trunk
 
 The WooCommerce Fat Zebra Gateway plugin enabled integration with WooCommerce and the Fat Zebra Payment Gateway (for Australian Merchants).
