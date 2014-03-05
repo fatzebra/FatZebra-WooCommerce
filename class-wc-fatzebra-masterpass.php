@@ -92,8 +92,6 @@ function fz_masterpass_init() {
 
     function payment_fields() {
       $logo_url = plugins_url("images/Fat-Zebra-Certified-small.png", __FILE__);
-      wp_enqueue_script("leanmodal", plugins_url("images/jquery.leanModal.min.js", __FILE__), array("jquery"));
-      wp_enqueue_script("fatzebra", plugins_url("images/fatzebra.js", __FILE__), array("leanmodal"));
 
       ?>
        <p>Check out with MasterCard MasterPass.</p>
