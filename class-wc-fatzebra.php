@@ -49,7 +49,7 @@ function fz_init() {
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
       $this->sandbox_url  = "https://gateway.sandbox.fatzebra.com.au/v{$this->api_version}/purchases";
-      $this->supports     = array( 'subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes' );
+      $this->supports     = array( 'subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes', 'default_credit_card_form' );
       $this->params       = array();
 
       // Define user set variables
@@ -144,184 +144,19 @@ function fz_init() {
       <?php
     } // End admin_options()
 
-    function payment_fields() {
-      $logo_url = plugins_url("images/Fat-Zebra-Certified-small.png", __FILE__);
-      wp_enqueue_script("leanmodal", plugins_url("images/jquery.leanModal.min.js", __FILE__), array("jquery"));
-      wp_enqueue_script("fatzebra", plugins_url("images/fatzebra.js", __FILE__), array("leanmodal"));
-
-      ?>
-
-      <?php if ($this->settings["show_logo"] == "yes"): ?>
-        <div id="fatzebra-logo">
-          <a href="https://www.fatzebra.com.au/?rel=logo" title="Fat Zebra Certified" target="_blank" tabindex="-1">
-            <img src="<?php echo $logo_url; ?>" alt="Fat Zebra Certified" border="0" style="border: none;" tabindex="-1"/>
-          </a>
-        </div>
-      <?php endif; ?>
-      <p>Pay online securely with your credit card.</p>
-      <fieldset>
-        <div class="clear"></div>
-        <p class="form-row cardnumber-row">
-          <label for="cardnumber">
-            <?php _e("Card Number", "woocommerce"); ?>
-            <abbr class="required" title="required">*</abbr>
-          </label>
-          <input type="text" name="cardnumber" id="cardnumber" class="input-text" />
-          <?php if ($this->settings["show_card_logos"]): ?>
-            <?php foreach($this->settings["show_card_logos"] as $position => $type): ?>
-              <img src="<?php echo plugins_url("images/" . strtolower($type) . "_32.png", __FILE__); ?>" alt="<?php echo $type; ?>" class="card_logo" id="card_<?php echo strtolower($type); ?>" />
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </p>
-
-  <div class="clear"></div>
-        <p class="form-row form-row-first">
-          <label for="card_expiry_month">
-            <?php _e("Expiry", "woocommerce"); ?>
-            <abbr class="required" title="required">*</abbr>
-          </label>
-          <input type="text" id="card_expiry_month" name="card_expiry_month" placeholder="<?php echo date("m"); ?>" style="width: 50px; margin-right: 0;" /> /
-          <input type="text" id="card_expiry_year" name="card_expiry_year" placeholder="<?php echo date("Y"); ?>" style="width: 70px;"/>
-        </p>
-        <p class="form-row form-row-last">
-          <label for="card_cvv">
-            <?php _e("Security Code", "woocommerce"); ?>
-            <abbr class="required" title="required">*</abbr>
-          </label>
-          <input type="text" id="card_cvv" name="card_cvv" placeholder="123" />
-          <a href="#security-code-details" rel='leanModal' id="what-is-security-code">
-      <img src="<?php echo plugins_url("images/question_mark.png", __FILE__); ?>" alt="What is the security code?"/>
-    </a>
-
-          <div id="security-code-details" style="display: none;">
-            <a href="#" class="modal_close">&times;</a>
-            <h3>Card Security Code</h3>
-            <img src="<?php echo plugins_url("images/security-codes.png", __FILE__); ?>" alt="Card Security Code Locations" />
-            <p>Your Card Security Code (also known as CVV, CSC or CV2) is a 3 or 4 digit number found in the following locations:</p>
-            <h4>VISA/MasterCard</h4>
-            <p>The security code is the three digit number on the back of your credit card in the signature panel.</p>
-            <h4>American Express/JCB</h4>
-            <p>The security code is the 4 digit number on the front of your card, just above and to the right of your credit card number.</p>
-          </div>
-        </p>
-
-        <style type='text/css'>
-          #lean_overlay {
-            position: fixed;
-            z-index:100;
-            top: 0px;
-            left: 0px;
-            height:100%;
-            width:100%;
-            background: #000;
-            display: none;
-          }
-
-    #security-code-details {
-      width: 500px;
-      height: 310px;
-      background-color: #fff;
-      padding: 20px;
-    }
-
-    #security-code-details img {
-      float: right;
-      margin: 10px;
-      margin-top: 20px;
-    }
-
-    #security-code-details h4, #security-code-details h3 {
-      display: inline-block;
-      font-weight: bold;
-    }
-
-    #security-code-details .modal_close {
-      float: right;
-      margin-top: -10px;
-      margin-right: -10px;
-      margin-left: 10px;
-      text-decoration: none;
-      color: #000;
-    }
-
-    #fatzebra-logo {
-      float: right;
-      margin-bottom: -50px;
-      border: none;
-    }
-
-    #payment .card_logo {
-            border: none;
-      display: inline;
-      padding: 0;
-      float: right;
-    }
-
-          #what-is-security-code, #what-is-security-code img {
-      display: inline;
-      float: none;
-      border: none;
-    }
-
-    .cardnumber-row {
-      width: 65%;
-    }
-
-    #cardnumber {
-      width: 75%;
-    }
-  </style>
-      </fieldset>
-      <?php
-    }
-
-    function validate_fields() {
-      global $woocommerce;
-
-      if(empty($_POST['cardnumber']))
-        $woocommerce->add_error(__("Card Number required", "woocommerce"));
-      if(empty($_POST['card_cvv']))
-        $woocommerce->add_error(__("Security Code required", "woocommerce"));
-      if(empty($_POST['card_expiry_month']))
-        $woocommerce->add_error(__("Expiry Month required", "woocommerce"));
-      if(empty($_POST['card_expiry_year']))
-        $woocommerce->add_error(__("Expiry Year required", "woocommerce"));
-
-        if(!empty($_POST['card_expiry_year']) &&
-           ((int)$_POST['card_expiry_year'] < date("Y"))) {
-          $woocommerce->add_error(__("Expiry date is invalid (year)", "woocommerce"));
-        }
-
-        if(!empty($_POST['card_expiry_month'])) {
-          $month = (int)$_POST['card_expiry_month'];
-          $year = (int)$_POST['card_expiry_year'];
-          if ($month < 1 || $month > 12) {
-            $woocommerce->add_error(__("Expiry date (month) must be between 1 and 12"));
-          }
-
-          if ($year == date("Y") && $month < date("m")) {
-            $woocommerce->add_error(__("Expiry date is invalid (month)", "woocommerce"));
-          }
-        }
-
-      if(!$woocommerce->error_count()) {
-        // OK Good to go!
-        $this->params["card_number"] = $_POST['cardnumber'];
-        $this->params["card_holder"] = $_POST['billing_first_name'] . " " . $_POST['billing_last_name'];
-        $this->params["cvv"] = $_POST['card_cvv'];
-        $this->params["card_expiry"] = $_POST['card_expiry_month'] . "/" . $_POST['card_expiry_year'];
-        $this->params["customer_ip"] = $_SERVER['REMOTE_ADDR'];
-        $this->valid = true;
-      } else {
-        $this->valid = false;
-      }
-    } // end validate fields
 
     /**
      * Process the payment and return the result
      **/
     function process_payment( $order_id ) {
       global $woocommerce;
+  
+      $this->params["card_number"] = str_replace(' ', '', $_POST['fatzebra-card-number']);
+      $this->params["cvv"] = $_POST["fatzebra-card-cvc"];
+      list($exp_month, $exp_year) = split('/', $_POST['fatzebra-card-expiry']);
+      $this->params["card_expiry"] = trim($exp_month) . "/" . (2000 + intval($exp_year));  
+      $this->params["card_holder"] = $_POST['billing_first_name'] . " " . $_POST['billing_last_name'];
+      $this->params["customer_ip"] = $_SERVER['REMOTE_ADDR'];
 
       $defer_payment = $this->settings["deferred_payments"] == "yes";
 
@@ -340,11 +175,6 @@ function fz_init() {
       $this->params["reference"] = (string)$order_id;
       $this->params["test"] = $test_mode;
       $this->params["deferred"] = $defer_payment;
-
-      // Ensure validation has run - this is where the params are set
-      // This isn't called when a wc subscription renewal order is being paid for, so we trigger it here
-      $this->validate_fields();
-      if(!$this->valid) return;
 
       if (trim($this->params["card_holder"]) == "") { // If the customer is updating their details the $_POST values for name will be missing, so fetch from the order
         $this->params["card_holder"] = $order->billing_first_name ." ". $order->billing_last_name;
@@ -412,7 +242,7 @@ function fz_init() {
 
         return array(
           'result'  => 'success',
-          'redirect'  => add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(get_option('woocommerce_thanks_page_id'))))
+          'redirect'  => $this->get_return_url( $order )
         );
       }
     }
