@@ -1,7 +1,7 @@
 === WooCommerce Fat Zebra Gateway ===
 Contributors: fatzebra
 Tags: ecommerce, woocommerce, fatzebra, payment gateway, australia, subscriptions, wcsubscriptions
-Requires at least: 3.3
+Requires at least: 3.8.1
 Stable tag: trunk
 
 The WooCommerce Fat Zebra Gateway plugin enabled integration with WooCommerce and the Fat Zebra Payment Gateway (for Australian Merchants).
@@ -16,7 +16,7 @@ Support has now been added for WooCommerce Subscriptions, allowing you to create
 
 ![WooCommerce Subscriptions](http://wcdocs.woothemes.com/wp-content/uploads/2012/06/supports-subscriptions-badge.png)
 
-Tested with WooCommerce version 1.6 and 2.0.2.
+Tested with WooCommerce version 2.1.
 
 Visit [https://www.fatzebra.com.au](https://www.fatzebra.com.au "Fat Zebra Online Payment Gateway") for more details on using Fat Zebra.
 
@@ -100,6 +100,10 @@ You should now be able to test the purchases via Fat Zebra.
 
 = 1.4.3 =
 * Bug fix to handle missing card holder name when updating payment details for subscriptions
+
+= 1.4.4 =
+* Updated to use the default card form provided by WooCommerce
+* Fixed issue with redirect upon successful payment
 
 == Support ==
 
