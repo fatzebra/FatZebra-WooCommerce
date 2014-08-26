@@ -179,8 +179,7 @@ function fz_masterpass_init() {
           case 3: // Declined - error data is array with keys: message, id
             $error = $this->response_data->response->message;
             $txn_id = $this->response_data->response->transaction_id;
-            return;
-          break;
+            break;
 
           case 4: // Exception caught, something bad happened. Data is exception
           default:

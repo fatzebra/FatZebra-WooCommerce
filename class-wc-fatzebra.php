@@ -191,7 +191,7 @@ function fz_init() {
           case 1: // Non-200 response, so failed... (e.g. 401, 403, 500 etc).
             $order->add_order_note($result->get_error_message());
             $woocommerce->add_error($result->get_error_message());
-          break;
+            break;
 
           case 2: // Gateway error (data etc)
             $errors = $result->get_error_data();
@@ -205,8 +205,7 @@ function fz_init() {
           case 3: // Declined - error data is array with keys: message, id
             $order->add_order_note(__("Payment Declined: " . $this->response_data->response->message . ". Reference: " . $this->response_data->response->transaction_id));
             $woocommerce->add_error("Payment declined: " . $this->response_data->response->message);
-            return;
-          break;
+            break;
 
           case 4: // Exception caught, something bad happened. Data is exception
           default:
@@ -275,8 +274,6 @@ function fz_init() {
       $this->params["deferred"] = false;
       $result = $this->do_payment($this->params);
 
-
-
       if (is_wp_error($result)) {
         $error = "";
         $txn_id = "None";
@@ -294,8 +291,7 @@ function fz_init() {
           case 3: // Declined - error data is array with keys: message, id
             $error = $this->response_data->response->message;
             $txn_id = $this->response_data->response->transaction_id;
-            return;
-          break;
+            break;
 
           case 4: // Exception caught, something bad happened. Data is exception
           default:
