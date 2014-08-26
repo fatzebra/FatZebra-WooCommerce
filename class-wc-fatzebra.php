@@ -28,9 +28,19 @@ add_action('plugins_loaded', 'fz_init', 0);
 function fz_init() {
   if ( !class_exists( 'WC_Payment_Gateway' ) ) { ?>
     <div id="message" class="error">
-      <p><?php printf( __( '%sWooCommerce Fat Zebra Extension is inactive.%s The %sWooCommerce plugin%s must be active for the WooCommerce Subscriptions to work. Please %sinstall & activate WooCommerce%s',  'wc_fatzebra'), '<strong>', '</strong>', '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>', '<a href="' . admin_url( 'plugins.php' ) . '">', '&nbsp;&raquo;</a>' ); ?></p>
+      <p><?php printf( __( '%sWooCommerce Fat Zebra Extension is inactive.%s The %sWooCommerce plugin%s must be active for the WooCommerce Fat Zebra Extension to work. Please %sinstall & activate WooCommerce%s',  'wc_fatzebra'), '<strong>', '</strong>', '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>', '<a href="' . admin_url( 'plugins.php' ) . '">', '&nbsp;&raquo;</a>' ); ?></p>
     </div>
     <?php
+    return;
+  }
+
+  global $woocommerce;
+  // Check the WooCommerce version...
+  if (!version_compare($woocommerce->version, '2.1', ">=")) { ?>
+    <div id="message" class="error">
+      <p><?php printf( __( '%sWooCommerce Fat Zebra Extension is inactive.%s The version of WooCommerce you are using is not compatible with this verion of the Fat Zebra Extension. Please update WooCommerce to version 2.1 or greater, or remove this version of the Fat Zebra Extension and install an older version.',  'wc_fatzebra'), '<strong>', '</strong>'); ?></p>
+    </div>
+  <?php
     return;
   }
 
