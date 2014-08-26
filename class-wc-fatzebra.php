@@ -54,12 +54,12 @@ function fz_init() {
       $this->icon         = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra', 'woocommerce' );
-      $this->version      = "1.4.4";
+      $this->version      = "1.4.5";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
       $this->sandbox_url  = "https://gateway.sandbox.fatzebra.com.au/v{$this->api_version}/purchases";
-      $this->supports     = array( 'subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes', 'default_credit_card_form' );
+      $this->supports     = array( 'subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes' );
       $this->params       = array();
 
       // Define user set variables
@@ -77,6 +77,27 @@ function fz_init() {
       add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) ); //> 2.0
       add_action('scheduled_subscription_payment_fatzebra', array(&$this, 'scheduled_subscription_payment'), 10, 3);
       add_action('woocommerce_order_actions', array(&$this, 'add_process_deferred_payment_button'), 99, 1);
+    }
+
+    /**
+    * Indicates if direct post is enabled/configured or not
+    */
+    function direct_post_enabled() {
+      return $this->settings['use_direct_post'] == 'yes' && !is_null($this->settings['shared_secret']);
+    }
+
+    /**
+    * Returns the direct post URL
+    */
+    function get_direct_post_url() {
+      $sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
+      $url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
+      // Replace the URL with the tokenize method and re-create the order text (json payload)
+      $url = str_replace("purchases", "credit_cards", $url);
+      $url = str_replace("v1.0", "v2", $url);
+      $url = $url . "/direct/" . $this->settings["username"] . ".json";
+
+      return $url;
     }
 
     /**
@@ -103,6 +124,12 @@ function fz_init() {
               'description' => __('Switches the gateway URL to the sandbox URL', "woocommerce"),
               'default' => "yes"
             ),
+      'use_direct_post' => array(
+              'title' => __('Use Direct Post', 'woocommerce'),
+              'type'  => 'checkbox',
+              'description' => 'Uses the Direct Post method for payments which prevents card data from being sent to your web server.',
+              'default' => 'no'
+            ),
       'show_logo' => array(
               'title' => __("Show Fat Zebra Logo", 'woocommerce'),
               'type' => 'checkbox',
@@ -127,6 +154,12 @@ function fz_init() {
               'type' => "text",
               'description' => __("The Gateway Authentication Token", "woocommerce"),
               'default' => "test"
+            ),
+      'shared_secret' => array(
+              'title' => __("Gateway Shared Secret", "woocommerce"),
+              'type' => "text",
+              'description' => __("The Gateway Shared Secret - Required for Direct Post", "woocommerce"),
+              'default' => ""
             ),
       'deferred_payments' => array(
         'title' => __("Enable Deferred Payments", "woocommerce"),
@@ -154,6 +187,27 @@ function fz_init() {
       <?php
     } // End admin_options()
 
+    function payment_fields() {
+        if ($this->direct_post_enabled()) {
+          // Register and enqueue direct post handling script
+          $url = $this->get_direct_post_url();
+
+          $return_path = uniqid('fatzebra-nonce-');
+          $verification_value = hash_hmac('md5', $return_path, $this->settings["shared_secret"]);
+
+          wp_register_script( 'fz-direct-post-handler', plugin_dir_url(__FILE__) . '/images/fatzebra.js', array( 'jquery' ), WC_VERSION, true );
+          wp_localize_script( 'fz-direct-post-handler', 'fatzebra', array(
+            'url' => $url,
+            'return_path' => $return_path,
+            'verification_value' => $verification_value
+            )
+          );
+          wp_enqueue_script( 'fz-direct-post-handler' );
+        }
+
+        $extra_fields = array("<input type='hidden' name='fatzebra-token' id='fatzebra-token' /><span class='payment-errors required'></span>");
+        $this->credit_card_form(array('fields_have_names' => !$this->direct_post_enabled()), $extra_fields);
+    }
 
     /**
      * Process the payment and return the result
@@ -161,11 +215,25 @@ function fz_init() {
     function process_payment( $order_id ) {
       global $woocommerce;
   
-      $this->params["card_number"] = str_replace(' ', '', $_POST['fatzebra-card-number']);
-      $this->params["cvv"] = $_POST["fatzebra-card-cvc"];
-      list($exp_month, $exp_year) = split('/', $_POST['fatzebra-card-expiry']);
-      $this->params["card_expiry"] = trim($exp_month) . "/" . (2000 + intval($exp_year));  
-      $this->params["card_holder"] = $_POST['billing_first_name'] . " " . $_POST['billing_last_name'];
+      if ($this->direct_post_enabled()) {
+        $this->params["card_token"] = $_POST['card_token'];
+      } else {
+        $this->params["card_number"] = str_replace(' ', '', $_POST['fatzebra-card-number']);
+        if (!isset($_POST["fatzebra-card-number"])) { $this->params["card_number"] = $_POST['cardnumber']; }
+        
+        $this->params["cvv"] = $_POST["fatzebra-card-cvc"];
+        if (!isset($_POST['fatzebra-card-cvc'])) { $this->params["cvv"] = $_POST['card_cvv']; }
+        
+        list($exp_month, $exp_year) = split('/', $_POST['fatzebra-card-expiry']);
+        if(!isset($_POST['fatzebra-card-expiry'])) { 
+          $exp_month = $_POST['card_expiry_month'];
+          $exp_year  = $_POST['card_expiry_year'];
+        }
+        $this->params["card_expiry"] = trim($exp_month) . "/" . (2000 + intval($exp_year));
+        
+        $this->params["card_holder"] = $_POST['billing_first_name'] . " " . $_POST['billing_last_name'];
+      }
+
       $this->params["customer_ip"] = $_SERVER['REMOTE_ADDR'];
 
       $defer_payment = $this->settings["deferred_payments"] == "yes";
