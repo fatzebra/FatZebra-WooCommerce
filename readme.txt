@@ -106,6 +106,11 @@ You should now be able to test the purchases via Fat Zebra.
 * Updated to use the default card form provided by WooCommerce
 * Fixed issue with redirect upon successful payment
 
+= 1.4.5 =
+* Added support for Direct Post tokenization, sending the card details directly to Fat Zebra instead of via the merchants web server
+* Added support for Visa Checkout as payment option
+* Added support for currencies other then AUD (based on order currency)
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.
