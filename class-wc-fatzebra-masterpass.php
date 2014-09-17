@@ -119,7 +119,7 @@ function fz_masterpass_init() {
       $_SESSION['masterpass_order_id'] = $order_id;
 
       $username    = $this->parent_settings["username"];
-      $currency    = get_woocommerce_currency();
+      $currency    = $order->get_order_currency();
       $reference   = (string)$order_id;
 
       $return_args = array('wc-api' => 'WC_FatZebra_MasterPass', "echo[order_id]" => $order_id);
