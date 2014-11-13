@@ -2,7 +2,7 @@
 Contributors: fatzebra
 Tags: ecommerce, woocommerce, fatzebra, payment gateway, australia, subscriptions, wcsubscriptions
 Requires at least: 3.8
-Tested up to: 3.8.1
+Tested up to: 4.0
 Stable tag: trunk
 
 The WooCommerce Fat Zebra Gateway plugin enabled integration with WooCommerce and the Fat Zebra Payment Gateway (for Australian Merchants).
@@ -111,6 +111,8 @@ You should now be able to test the purchases via Fat Zebra.
 * Added support for Visa Checkout as payment option
 * Added support for currencies other then AUD (based on order currency)
 
+= 1.5.1 =
+* Fixed issue where visa checkout express option wasn't working properly
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.

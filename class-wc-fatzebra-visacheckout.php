@@ -8,17 +8,17 @@ function fz_visacheckout_init() {
       $this->icon         = "https://assets.secure.checkout.visa.com/VmeCardArts/partner/POS_horizontal_99x34.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (VISA Checkout)', 'woocommerce' );
-      $this->version      = "1.5.0";
+      $this->version      = "1.5.1";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
       $this->sandbox_url  = "https://gateway.sandbox.fatzebra.com.au/v{$this->api_version}/purchases";
 
-      $this->supports     = array( 'subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes' );
+      $this->supports     = array( 'subscriptions', 'products', 'refunds', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes' );
       $this->params       = array();
 
       // Define user set variables
-      $this->title        = 'VISA Checkout';
+      $this->title        = 'Visa Checkout';
       $this->description  = in_array("description", $this->settings) ? $this->settings['description'] : "";
 
       // Load the form fields.
@@ -72,6 +72,11 @@ function fz_visacheckout_init() {
               'description' => "The HTTPS Logo URL to be displayed in the Visa Checkout Dialog. Maximum 174px wide and 34px high.",
               'default' => ''
             ),
+      'collect_shipping' => array(
+              'title' => "Collect Shipping Details",
+              'type' => 'text',
+              'default' => 'yes'
+            ),  
       );
 
     } // End init_form_fields()
@@ -104,6 +109,20 @@ function fz_visacheckout_init() {
       <p>
         With Visa Checkout, you now have an easier way to pay with your card online, from the company you know and trust. Create an account once and speed through your purchase without re-entering payment or shipping information wherever you see Visa Checkout.
       </p>
+
+      <?php if (!empty($callid)) { ?>
+        <p style='font-weight: bold'>The following card has been selected via Visa Checkout:</p>
+        <p style='font-size: 20px; padding-left: 40px; margin-top: 20px; font-family: monospace;'>
+          <?php echo WC()->session->get('visa_wallet_masked_number'); ?>
+        </p>
+
+      <?php } ?>
+
+      <style type='text/css'>
+        #custom-visa-checkout-outer-container{
+         float: right;
+        }
+      </style>
       <?php
 
       $visa_base_url = $this->parent_settings['sandbox_mode'] == "yes" ? 'https://sandbox.secure.checkout.visa.com' : 'https://secure.checkout.visa.com';
@@ -124,10 +143,10 @@ function fz_visacheckout_init() {
             'card_brands' => $accepted_cards,
             'currency' => get_woocommerce_currency(),
             'order_total' => $woocommerce->cart->total,
-            'visa_checkout_button' => "<img src='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=213' class='v-button' data-2x-image='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=425' width='213' height='47' role='button' style='float: right; width: auto; clear: both; border: none; background: none; box-shadow: none;'/>",
+            'visa_checkout_button' => $this->get_visa_checkout_button($accepted_cards),
             'button_text' => 'Pay',
             'review_message' => 'Please select your card and click Pay to complete your order',
-            'shipping' => false,
+            'shipping' => $this->settings['collect_shipping'] == "yes",
             'checkout_captured' => !is_null($callid)
             )
           );
@@ -256,7 +275,7 @@ function fz_visacheckout_init() {
               $order->add_order_note("Fraud Check Result: " . $this->response_data->response->fraud_result  . " - " . implode(", ", $this->response_data->response->fraud_messages));
             }
           }
-          $order->payment_complete();
+          $order->payment_complete($result['transaction_id']);
 
           // Clear the session values
           $this->clear_visa_checkout_session_values();
@@ -272,6 +291,16 @@ function fz_visacheckout_init() {
           'redirect'  => $this->get_return_url( $order )
         );
       }
+    }
+
+    public function process_refund( $order_id, $amount = null, $reason = '' ) {
+      $payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
+      if (!isset($payment_gateways['fatzebra'])) {
+        return false;
+      }
+
+      $gw = $payment_gateways['fatzebra'];
+      return $gw->process_refund($order_id, $amount, $reason);
     }
 
     /**
@@ -489,6 +518,45 @@ function fz_visacheckout_init() {
         WC()->session->set($key, null);
       endforeach; 
     }
+
+    function get_visa_checkout_button($accepted_cards) {
+      return "<style type='text/css'>
+                #custom-visa-checkout-outer-container{
+                  position:relative;
+                  width: 213px;
+                  display: inline-block;
+                  margin-top: 5px;
+                }
+                #custom-visa-checkout-learn-more{
+                  width:210px;
+                  text-align:right;
+                  margin-top: -10px;
+                }
+                #custom-visa-checkout-learn-more-text{
+                  font:bold 8.5pt arial;
+                  text-decoration: none;
+                  color: #0044AA;
+                }
+                img#custom-visa-checkout {
+                  max-width: inherit;
+                }
+
+                .v-button {
+                  cursor: pointer;
+                  width: 213px !important;
+                  box-shadow: none !important;
+                  border: none !important;
+                  backgound: none !important;
+                }
+              </style>
+              <div id='custom-visa-checkout-outer-container'>
+                <img alt='Button' class='v-button' data-2x-image='https://secure.checkout.visa.com/wallet-services-web/xo/button.png?locale=en_AU&amp;card_brands=VISA,MasterCard&amp;style=color&amp;size=425' height='47' id='v-checkout-button' role='button' src='https://secure.checkout.visa.com/wallet-services-web/xo/button.png?locale=en_AU&amp;card_brands=VISA,MasterCard&amp;style=color&amp;size=213' width='213'>
+                <div id='custom-visa-checkout-learn-more'>
+                  <a href='javascript:void(0)' id='custom-visa-checkout-learn-more-text' onclick=\"document.getElementById('custom-visa-checkout').style.display='block'\">Learn More</a>
+                </div>
+                <img alt='Cart_learnmore_pop-up_left' id='custom-visa-checkout' onclick=\"document.getElementById('custom-visa-checkout').style.display='none';\" src='https://sandbox-assets.secure.checkout.visa.com/VmeCardArts/partner/Cart_LearnMore_Pop-Up_left.png' style='display: none; z-index: 9999; position: absolute; top: -170px; left: 220px; box-shadow: none; width: auto;'>
+              </div>";
+    }
   }
 
   /**
@@ -525,19 +593,15 @@ function fz_visacheckout_init() {
             'card_brands' => $accepted_cards,
             'currency' => get_woocommerce_currency(),
             'order_total' => $amount,
-            'visa_checkout_button' => "<img src='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=213' class='v-button' data-2x-image='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=425' width='213' height='47' role='button' style='float: right; width: auto; clear: both; border: none; background: none; box-shadow: none;'/>",
+            'visa_checkout_button' => $gw->get_visa_checkout_button($accepted_cards),
             'inline' => true,
-            'shipping' => false,
+            'shipping' => $gw->settings['collect_shipping'] == "yes",
             'button_text' => 'Continue',
             'review_message' => 'Please select your card and click Continue to finish your order',
             )
           );
       wp_enqueue_script( 'fz-visacheckout' );  
       wp_enqueue_script( 'visa-checkout' );
-
-    // Visa Checkout Button
-    // Visa Checkout INIT
-    // Handler for callback (process payment, retrieve address details, update order)
   }
 
   function fz_visacheckout_set_callid_cookie() {
@@ -582,6 +646,7 @@ function fz_visacheckout_init() {
     WC()->session->set('visa_wallet_email', $wallet->email);
     WC()->session->set('visa_wallet_callid', $callid);
     WC()->session->set('visa_wallet_token', $token_result['card_token']);
+    WC()->session->set('visa_wallet_masked_number', $token_result['card_number']);
 
     wc_setcookie('fatzebra_visacheckout_callid', null, time() - 3600);
     return $fields;    

@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.5.0
+Version: 1.5.1
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -58,7 +58,7 @@ function fz_init() {
       $this->icon = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields = true;
       $this->method_title = __('Fat Zebra', 'woocommerce');
-      $this->version = "1.5.0";
+      $this->version = "1.5.1";
 
       $this->api_version = "1.0";
       $this->live_url = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -367,7 +367,7 @@ function fz_init() {
             }
           }
 
-          $order->payment_complete();
+          $order->payment_complete($result['transaction_id']);
 
           // Store the card token as post meta
           update_post_meta($order_id, "_fatzebra_card_token", $result["card_token"]);
@@ -397,7 +397,7 @@ function fz_init() {
       $order = new WC_Order($order_id);
       $this->params["amount"] = (int)($amount * 100);
       $this->params["reference"] = $order_id . "-" . time(); // It is not possible to simply refund against the order ID as multiple reunds are permitted...
-      $this->params["transaction_id"] = get_post_meta($order_id, 'Fat Zebra Transaction ID', true); // The original FZ transaction ID
+      $this->params["transaction_id"] = get_post_meta($order_id, '_transaction_id', true);
       if (empty($this->params['transaction_id'])) {
         $this->params["transaction_id"] = $this->fetch_fatzebra_transaction_id($order_id);
       }

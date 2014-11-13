@@ -8,7 +8,7 @@ function fz_masterpass_init() {
       $this->icon         = "https://www.mastercard.com/mc_us/wallet/img/en/AU/mcpp_wllt_btn_chk_147x034px.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (MasterPass)', 'woocommerce' );
-      $this->version      = "1.5.0";
+      $this->version      = "1.5.1";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -16,7 +16,7 @@ function fz_masterpass_init() {
       $this->sandbox_paynow_url = "https://paynow.sandbox.fatzebra.com.au/v2";
       $this->live_paynow_url = "https://paynow.fatzebra.com.au/v2";
 
-      $this->supports     = array( 'subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes' );
+      $this->supports     = array( 'subscriptions', 'products', 'refunds', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes' );
       $this->params       = array();
 
       // Define user set variables
@@ -200,6 +200,16 @@ function fz_masterpass_init() {
       }
     }
 
+    public function process_refund( $order_id, $amount = null, $reason = '' ) {
+      $payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
+      if (!isset($payment_gateways['fatzebra'])) {
+        return false;
+      }
+
+      $gw = $payment_gateways['fatzebra'];
+      return $gw->process_refund($order_id, $amount, $reason);
+    }
+
     /**
     *
     * Handle the callback from MasterPass for processing
@@ -226,7 +236,7 @@ function fz_masterpass_init() {
 
       switch((int)$_GET['r']) {
         case 1:
-          $order->payment_complete();
+          $order->payment_complete($_GET['id']);
           $order->add_order_note("Payment via Fat Zebra (MasterPass) successful. Transaction ID: " . $_GET['id'] .   ". Message: " . $_GET['message']);
           $woocommerce->cart->empty_cart();
 
