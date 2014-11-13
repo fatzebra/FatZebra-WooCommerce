@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.4.4
+Version: 1.5.0
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -25,8 +25,7 @@ Author URI: https://www.fatzebra.com.au
 
 add_action('plugins_loaded', 'fz_init', 0);
 
-function fz_init()
-{
+function fz_init() {
   if (!class_exists('WC_Payment_Gateway')) {
     ?>
     <div id="message" class="error">
@@ -52,21 +51,19 @@ function fz_init()
   fz_masterpass_init();
   fz_visacheckout_init();
 
-  class WC_FatZebra extends WC_Payment_Gateway
-  {
+  class WC_FatZebra extends WC_Payment_Gateway {
 
-    public function __construct()
-    {
+    public function __construct() {
       $this->id = 'fatzebra';
       $this->icon = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields = true;
       $this->method_title = __('Fat Zebra', 'woocommerce');
-      $this->version = "1.4.6";
+      $this->version = "1.5.0";
 
       $this->api_version = "1.0";
       $this->live_url = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
       $this->sandbox_url = "https://gateway.sandbox.fatzebra.com.au/v{$this->api_version}/purchases";
-      $this->supports = array('subscriptions', 'products', 'products', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes');
+      $this->supports = array('subscriptions', 'products', 'refunds', 'subscription_cancellation', 'subscription_reactivation', 'subscription_suspension', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_date_changes');
       $this->params = array();
       $this->country_map = array("AD" => "AND", "AE" => "ARE", "AF" => "AFG", "AG" => "ATG", "AI" => "AIA", "AL" => "ALB", "AM" => "ARM", "AN" => "ANT", "AO" => "AGO", "AQ" => "ATA", "AR" => "ARG", "AS" => "ASM", "AT" => "AUT", "AU" => "AUS", "AW" => "ABW", "AX" => "ALA", "AZ" => "AZE", "BA" => "BIH", "BB" => "BRB", "BD" => "BGD", "BE" => "BEL", "BF" => "BFA", "BG" => "BGR", "BH" => "BHR", "BI" => "BDI", "BJ" => "BEN", "BL" => "BLM", "BM" => "BMU", "BN" => "BRN", "BO" => "BOL", "BQ" => "BES", "BR" => "BRA", "BS" => "BHS", "BT" => "BTN", "BV" => "BVT", "BW" => "BWA", "BY" => "BLR", "BZ" => "BLZ", "CA" => "CAN", "CC" => "CCK", "CD" => "COD", "CF" => "CAF", "CG" => "COG", "CH" => "CHE", "CI" => "CIV", "CK" => "COK", "CL" => "CHL", "CM" => "CMR", "CN" => "CHN", "CO" => "COL", "CR" => "CRI", "CU" => "CUB", "CV" => "CPV", "CW" => "CUW", "CX" => "CXR", "CY" => "CYP", "CZ" => "CZE", "DE" => "DEU", "DJ" => "DJI", "DK" => "DNK", "DM" => "DMA", "DO" => "DOM", "DZ" => "DZA", "EC" => "ECU", "EE" => "EST", "EG" => "EGY", "EH" => "ESH", "ER" => "ERI", "ES" => "ESP", "ET" => "ETH", "FI" => "FIN", "FJ" => "FJI", "FK" => "FLK", "FM" => "FSM", "FO" => "FRO", "FR" => "FRA", "GA" => "GAB", "GB" => "GBR", "GD" => "GRD", "GE" => "GEO", "GF" => "GUF", "GG" => "GGY", "GH" => "GHA", "GI" => "GIB", "GL" => "GRL", "GM" => "GMB", "GN" => "GIN", "GP" => "GLP", "GQ" => "GNQ", "GR" => "GRC", "GS" => "SGS", "GT" => "GTM", "GU" => "GUM", "GW" => "GNB", "GY" => "GUY", "HK" => "HKG", "HM" => "HMD", "HN" => "HND", "HR" => "HRV", "HT" => "HTI", "HU" => "HUN", "ID" => "IDN", "IE" => "IRL", "IL" => "ISR", "IM" => "IMN", "IN" => "IND", "IO" => "IOT", "IQ" => "IRQ", "IR" => "IRN", "IS" => "ISL", "IT" => "ITA", "JE" => "JEY", "JM" => "JAM", "JO" => "JOR", "JP" => "JPN", "KE" => "KEN", "KG" => "KGZ", "KH" => "KHM", "KI" => "KIR", "KM" => "COM", "KN" => "KNA", "KP" => "PRK", "KR" => "KOR", "KW" => "KWT", "KY" => "CYM", "KZ" => "KAZ", "LA" => "LAO", "LB" => "LBN", "LC" => "LCA", "LI" => "LIE", "LK" => "LKA", "LR" => "LBR", "LS" => "LSO", "LT" => "LTU", "LU" => "LUX", "LV" => "LVA", "LY" => "LBY", "MA" => "MAR", "MC" => "MCO", "MD" => "MDA", "ME" => "MNE", "MF" => "MAF", "MG" => "MDG", "MH" => "MHL", "MK" => "MKD", "ML" => "MLI", "MM" => "MMR", "MN" => "MNG", "MO" => "MAC", "MP" => "MNP", "MQ" => "MTQ", "MR" => "MRT", "MS" => "MSR", "MT" => "MLT", "MU" => "MUS", "MV" => "MDV", "MW" => "MWI", "MX" => "MEX", "MY" => "MYS", "MZ" => "MOZ", "NA" => "NAM", "NC" => "NCL", "NE" => "NER", "NF" => "NFK", "NG" => "NGA", "NI" => "NIC", "NL" => "NLD", "NO" => "NOR", "NP" => "NPL", "NR" => "NRU", "NU" => "NIU", "NZ" => "NZL", "OM" => "OMN", "PA" => "PAN", "PE" => "PER", "PF" => "PYF", "PG" => "PNG", "PH" => "PHL", "PK" => "PAK", "PL" => "POL", "PM" => "SPM", "PN" => "PCN", "PR" => "PRI", "PS" => "PSE", "PT" => "PRT", "PW" => "PLW", "PY" => "PRY", "QA" => "QAT", "RE" => "REU", "RO" => "ROU", "RS" => "SRB", "RU" => "RUS", "RW" => "RWA", "SA" => "SAU", "SB" => "SLB", "SC" => "SYC", "SD" => "SDN", "SE" => "SWE", "SG" => "SGP", "SH" => "SHN", "SI" => "SVN", "SJ" => "SJM", "SK" => "SVK", "SL" => "SLE", "SM" => "SMR", "SN" => "SEN", "SO" => "SOM", "SR" => "SUR", "SS" => "SSD", "ST" => "STP", "SV" => "SLV", "SX" => "SXM", "SY" => "SYR", "SZ" => "SWZ", "TC" => "TCA", "TD" => "TCD", "TF" => "ATF", "TG" => "TGO", "TH" => "THA", "TJ" => "TJK", "TK" => "TKL", "TL" => "TLS", "TM" => "TKM", "TN" => "TUN", "TO" => "TON", "TR" => "TUR", "TT" => "TTO", "TV" => "TUV", "TW" => "TWN", "TZ" => "TZA", "UA" => "UKR", "UG" => "UGA", "UM" => "UMI", "US" => "USA", "UY" => "URY", "UZ" => "UZB", "VA" => "VAT", "VC" => "VCT", "VE" => "VEN", "VG" => "VGB", "VI" => "VIR", "VN" => "VNM", "VU" => "VUT", "WF" => "WLF", "WS" => "WSM", "YE" => "YEM", "YT" => "MYT", "ZA" => "ZAF", "ZM" => "ZMB", "ZW" => "ZWE");
 
@@ -90,24 +87,21 @@ function fz_init()
     /**
      * Indicates if direct post is enabled/configured or not
      */
-    function direct_post_enabled()
-    {
+    function direct_post_enabled() {
       return $this->settings['use_direct_post'] == 'yes' && !is_null($this->settings['shared_secret']);
     }
 
     /**
      * Indicates if we should send fraud data
      */
-    function fraud_detection_enabled()
-    {
+    function fraud_detection_enabled() {
       return $this->settings['fraud_data'] == 'yes';
     }
 
     /**
      * Returns the direct post URL
      */
-    function get_direct_post_url()
-    {
+    function get_direct_post_url() {
       $sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
       $url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
       // Replace the URL with the tokenize method and re-create the order text (json payload)
@@ -208,8 +202,7 @@ function fz_init()
      *
      * @since 1.0.0
      */
-    public function admin_options()
-    {
+    public function admin_options() {
       ?>
       <h3><?php _e('Fat Zebra', 'woocommerce'); ?></h3>
       <p><?php _e('Allows Fat Zebra Payments. ', 'woocommerce'); ?></p>
@@ -219,8 +212,7 @@ function fz_init()
     <?php
     } // End admin_options()
 
-    function payment_fields()
-    {
+    function payment_fields() {
       if ($this->direct_post_enabled()) {
         // Register and enqueue direct post handling script
         $url = $this->get_direct_post_url();
@@ -230,10 +222,9 @@ function fz_init()
 
         wp_register_script('fz-direct-post-handler', plugin_dir_url(__FILE__) . '/images/fatzebra.js', array('jquery'), WC_VERSION, true);
         wp_localize_script('fz-direct-post-handler', 'fatzebra', array(
-            'url' => $url,
-            'return_path' => $return_path,
-            'verification_value' => $verification_value
-          )
+          'url' => $url, 
+          'return_path' => $return_path, 
+          'verification_value' => $verification_value)
         );
         wp_enqueue_script('fz-direct-post-handler');
       }
@@ -252,8 +243,7 @@ function fz_init()
     /**
      * Process the payment and return the result
      **/
-    function process_payment($order_id)
-    {
+    function process_payment($order_id) {
       global $woocommerce;
 
       if ($this->direct_post_enabled()) {
@@ -369,11 +359,11 @@ function fz_init()
             $order->add_order_note(__("Fat Zebra payment complete. Reference: " . $result["transaction_id"]));
           }
 
-          if (isset($this->response_data->response->fraud_result ) && !empty($this->response_data->response->fraud_result )) {
-            if ($this->response_data->response->fraud_result  == 'Accept') {
+          if (isset($this->response_data->response->fraud_result) && !empty($this->response_data->response->fraud_result)) {
+            if ($this->response_data->response->fraud_result == 'Accept') {
               $order->add_order_note("Fraud Check Result: Accept");
             } else {
-              $order->add_order_note("Fraud Check Result: " . $this->response_data->response->fraud_result  . " - " . implode(", ", $this->response_data->response->fraud_messages));
+              $order->add_order_note("Fraud Check Result: " . $this->response_data->response->fraud_result . " - " . implode(", ", $this->response_data->response->fraud_messages));
             }
           }
 
@@ -382,19 +372,96 @@ function fz_init()
           // Store the card token as post meta
           update_post_meta($order_id, "_fatzebra_card_token", $result["card_token"]);
           update_post_meta($order_id, "fatzebra_card_token", $result["card_token"]);
+          update_post_meta($order_id, 'Fat Zebra Transaction ID', $result['transaction_id']);
         }
         $woocommerce->cart->empty_cart();
 
-        return array(
-          'result' => 'success',
-          'redirect' => $this->get_return_url($order)
-        );
+        return array('result' => 'success', 'redirect' => $this->get_return_url($order));
       }
     }
 
+    /**
+     * Process refund
+     *
+     * If the gateway declares 'refunds' support, this will allow it to refund
+     * a passed in amount.
+     *
+     * @param  int $order_id
+     * @param  float $amount
+     * @param  string $reason
+     * @return  boolean True or false based on success, or a WP_Error object
+     */
+    public function process_refund( $order_id, $amount = null, $reason = '' ) {
+      global $woocommerce;
+
+      $order = new WC_Order($order_id);
+      $this->params["amount"] = (int)($amount * 100);
+      $this->params["reference"] = $order_id . "-" . time(); // It is not possible to simply refund against the order ID as multiple reunds are permitted...
+      $this->params["transaction_id"] = get_post_meta($order_id, 'Fat Zebra Transaction ID', true); // The original FZ transaction ID
+      if (empty($this->params['transaction_id'])) {
+        $this->params["transaction_id"] = $this->fetch_fatzebra_transaction_id($order_id);
+      }
+
+      $this->params["customer_ip"] = $this->get_customer_real_ip();
+      $this->params["currency"] = $order->get_order_currency();
+      
+      $test_mode = $this->settings['test_mode'] == 'yes';
+      $this->params["test"] = $test_mode;
+      $sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
+
+      $order_text = json_encode($this->params);
+
+      $url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
+      // URL is for /refunds
+      $url = str_replace('purchases', 'refunds', $url);
+
+      $args = array('method' => 'POST',
+                    'body' => $order_text,
+                    'headers' => array('Authorization' => 'Basic ' . base64_encode($this->settings["username"] . ":" . $this->settings["token"]),
+                      'X-Test-Mode' => $test_mode, 
+                      'User-Agent' => "WooCommerce Plugin " . $this->version),
+                    'timeout' => 30);
+      try {
+        $this->response = (array)wp_remote_request($url, $args);
+
+        if ((int)$this->response["response"]["code"] != 200 && (int)$this->response["response"]["code"] != 201) {
+         wc_add_notice("Refund failed: " . $this->response["response"]["message"], 'error');
+         return false;
+        }
+
+        $this->response_data = json_decode($this->response['body']);
+
+        if (!$this->response_data->successful) {
+          wc_add_notice('Refund Failed - Gateway Error: ' . implode(",", $this->response_data->errors), 'error');
+          return false;
+        }
+
+        if (!$this->response_data->response->successful) {
+          wc_add_notice('Refund Declined: ' . $this->response_data->response->message, 'error');
+          return false;
+        }
+
+        if ($this->response_data->response->successful) {
+          wc_add_notice('Refund Approved');
+          $order->add_order_note('Refund for ' . $amount . ' successful. Refund ID: ' . $this->response_data->response->id);
+          return true;
+        }
+
+      } catch (Exception $e) {
+        wc_add_notice("Unknown Refund Error - please see error log", "error");
+        error_log("Exception caught during refund: " . print_r($e, true));
+        return false;
+      }
+
+      return false;
+    }
+
+    function fetch_fatzebra_transaction_id($order_id) {
+      return false;
+    }
+
     // For the thankyou page :)
-    function thankyou_page()
-    {
+    function thankyou_page() {
       if ($this->description) echo wpautop(wptexturize($this->description));
     }
 
@@ -405,8 +472,7 @@ function fz_init()
      * @param $order the order ID
      * @param $product_id the product ID
      */
-    function scheduled_subscription_payment($amount_to_charge, $order, $product_id)
-    {
+    function scheduled_subscription_payment($amount_to_charge, $order, $product_id) {
       $this->params = array();
       $this->params["amount"] = (int)($amount_to_charge * 100);
       $this->params["test"] = $test_mode;
@@ -464,8 +530,7 @@ function fz_init()
      *
      * @return mixed WP_Error or Array (result)
      */
-    function do_payment($params)
-    {
+    function do_payment($params) {
       $sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
       $test_mode = $this->settings["test_mode"] == "yes";
 
@@ -487,15 +552,16 @@ function fz_init()
       }
 
       $args = array(
-        'method' => 'POST',
-        'body' => $order_text,
+        'method' => 'POST', 
+        'body' => $order_text, 
         'headers' => array(
           'Authorization' => 'Basic ' . base64_encode($this->settings["username"] . ":" . $this->settings["token"]),
-          'X-Test-Mode' => $test_mode,
+          'X-Test-Mode' => $test_mode, 
           'User-Agent' => "WooCommerce Plugin " . $this->version
-        ),
+          ),
         'timeout' => 30
-      );
+        );
+
       try {
         $this->response = (array)wp_remote_request($url, $args);
 
@@ -541,8 +607,7 @@ function fz_init()
      *
      * @return mixed WP_Error or Array (result)
      */
-    function tokenize_card($params)
-    {
+    function tokenize_card($params) {
       $sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
       $test_mode = $this->settings["test_mode"] == "yes";
 
@@ -559,15 +624,15 @@ function fz_init()
       $order_text = json_encode($payload);
 
       $args = array(
-        'method' => 'POST',
-        'body' => $order_text,
+        'method' => 'POST', 
+        'body' => $order_text, 
         'headers' => array(
           'Authorization' => 'Basic ' . base64_encode($this->settings["username"] . ":" . $this->settings["token"]),
-          'X-Test-Mode' => $test_mode,
+          'X-Test-Mode' => $test_mode, 
           'User-Agent' => "WooCommerce Plugin " . $this->version
-        ),
+          ), 
         'timeout' => 30
-      );
+        );
       try {
         $this->response = (array)wp_remote_request($url, $args);
 
@@ -596,8 +661,7 @@ function fz_init()
     }
 
     // Add the 'Charge Card' button if the order is on-hold
-    function add_process_deferred_payment_button($order_id)
-    {
+    function add_process_deferred_payment_button($order_id) {
       $order = new WC_Order($order_id);
       if ($order->status == "on-hold") {
         echo '<li><input type="submit" class="button tips" name="process" value="Charge Card" data-tip="Attempts to process a deferred payment" /></li>';
@@ -607,14 +671,8 @@ function fz_init()
     /** Builds the fraud payload for the request
      * @param $order WC_Order the order to build the payload against
      */
-    function get_fraud_payload($order)
-    {
-      $fraud_data = array(
-        "website" => get_site_url(),
-        "customer" => $this->get_fraud_customer($order),
-        "items" => $this->get_fraud_items($order),
-        "shipping_address" => $this->get_fraud_shipping($order)
-      );
+    function get_fraud_payload($order) {
+      $fraud_data = array("website" => get_site_url(), "customer" => $this->get_fraud_customer($order), "items" => $this->get_fraud_items($order), "shipping_address" => $this->get_fraud_shipping($order));
 
       if ($this->settings["fraud_device_id"] === "yes") {
         $fraud_data["device_id"] = $_POST['io_bb'];
@@ -626,29 +684,26 @@ function fz_init()
     /**
      * Fetches the customer details for the fraud check request
      */
-    function get_fraud_customer($order)
-    {
+    function get_fraud_customer($order) {
       $data = array(
-        'first_name' => $order->billing_first_name,
-        'last_name' => $order->billing_last_name,
-        'email' => $order->billing_email,
-        'address_1' => $order->billing_address_1,
-        'address_2' => $order->billing_address_2,
-        'city' => $order->billing_city,
-        'country' => $this->country_map[$order->billing_country],
-        'post_code' => $order->billing_postcode,
+        'first_name' => $order->billing_first_name, 
+        'last_name' => $order->billing_last_name, 
+        'email' => $order->billing_email, 
+        'address_1' => $order->billing_address_1, 
+        'address_2' => $order->billing_address_2, 
+        'city' => $order->billing_city, 
+        'country' => $this->country_map[$order->billing_country], 
+        'post_code' => $order->billing_postcode, 
         'home_phone' => $order->billing_phone
-      );
+        );
 
-      // TODO: Customer DOB, Customer Created AT, Existing Customer
       return $data;
     }
 
     /**
      * Fetches the item details from the order for the fraud check request
      */
-    function get_fraud_items($order)
-    {
+    function get_fraud_items($order) {
 
       $data = array();
       $items = $order->get_items();
@@ -663,13 +718,13 @@ function fz_init()
         }
 
         $data[] = array(
-          'product_code' => (string)$product->id,
-          'sku' => $product->sku,
-          'description' => $name,
-          'qty' => $item['qty'],
-          'cost' => $product->get_price(),
+          'product_code' => (string)$product->id, 
+          'sku' => $product->sku, 
+          'description' => $name, 
+          'qty' => $item['qty'], 
+          'cost' => $product->get_price(), 
           'line_total' => $order->get_line_subtotal($item)
-        );
+          );
       }
 
       return $data;
@@ -678,18 +733,17 @@ function fz_init()
     /**
      * Fetches the shipping details from the order for the fraud check request
      */
-    function get_fraud_shipping($order)
-    {
+    function get_fraud_shipping($order) {
       $data = array(
-        'first_name' => $order->shipping_first_name,
-        'last_name' => $order->shipping_last_name,
-        'email' => $order->shipping_email,
-        'address_1' => $order->shipping_address_1,
-        'address_2' => $order->shipping_address_2,
-        'city' => $order->shipping_city,
-        'country' => $this->country_map[$order->shipping_country],
-        'post_code' => $order->shipping_postcode,
-        'shipping_method' => 'low_cost' // TODO: Shipping Method Map
+      'first_name' => $order->shipping_first_name, 
+      'last_name' => $order->shipping_last_name, 
+      'email' => $order->shipping_email, 
+      'address_1' => $order->shipping_address_1, 
+      'address_2' => $order->shipping_address_2, 
+      'city' => $order->shipping_city, 
+      'country' => $this->country_map[$order->shipping_country], 
+      'post_code' => $order->shipping_postcode, 
+      'shipping_method' => 'low_cost' // TODO: Shipping Method Map
       );
 
       if (empty($data['email'])) $data['email'] = $order->billing_email;
@@ -697,8 +751,7 @@ function fz_init()
       return $data;
     }
 
-    function get_customer_real_ip()
-    {
+    function get_customer_real_ip() {
       $customer_ip = $_SERVER['REMOTE_ADDR'];
       if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         $forwarded_ips = explode(', ', $_SERVER['HTTP_X_FORWARDED_FOR']);
@@ -712,15 +765,13 @@ function fz_init()
   /**
    * Add the gateway to WooCommerce
    **/
-  function add_fz_gateway($methods)
-  {
+  function add_fz_gateway($methods) {
     $methods[] = 'WC_FatZebra';
     return $methods;
   }
 
   // Attempt to process the deferred payment. This is called when you press the 'Charge card' button on the order page.
-  function attempt_deferred_payment($post_id, $post)
-  {
+  function attempt_deferred_payment($post_id, $post) {
     global $wpdb, $woocommerce, $woocommerce_errors;
 
     // Bail if we don't have anything to do.
@@ -786,8 +837,7 @@ function fz_init()
   // Only update the recurring payment method if:
   //  - The method is not set
   //  - the fatzebra_card_token is set
-  function set_recurring_payment_method($post_id)
-  {
+  function set_recurring_payment_method($post_id) {
     $method = get_post_meta($post_id, "_recurring_payment_method", true);
     $token = get_post_meta($post_id, "fatzebra_card_token", true);
     if (empty($method) && !empty($token)) {
@@ -796,7 +846,25 @@ function fz_init()
     }
   }
 
+  function fz_customize_woocommerce_states() {
+    global $states;
+ 
+    $states['AU'] = array(
+        'ACT' => __( 'ACT', 'woocommerce' ),
+        'NSW' => __( 'NSW', 'woocommerce' ),
+        'NT'  => __( 'NT', 'woocommerce' ),
+        'QLD' => __( 'QLD', 'woocommerce' ),
+        'SA'  => __( 'SA', 'woocommerce' ),
+        'TAS' => __( 'TAS', 'woocommerce' ),
+        'VIC' => __( 'VIC', 'woocommerce' ),
+        'WA'  => __( 'WA', 'woocommerce' )
+    );
+
+    return $states;
+  }
+
   add_filter('woocommerce_payment_gateways', 'add_fz_gateway');
   add_action('woocommerce_process_shop_order_meta', 'attempt_deferred_payment', 1, 2);
   add_action('save_post', 'set_recurring_payment_method');
+  add_filter( 'woocommerce_states', 'fz_customize_woocommerce_states' );
 }

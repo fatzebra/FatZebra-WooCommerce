@@ -8,7 +8,7 @@ function fz_visacheckout_init() {
       $this->icon         = "https://assets.secure.checkout.visa.com/VmeCardArts/partner/POS_horizontal_99x34.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (VISA Checkout)', 'woocommerce' );
-      $this->version      = "1.4.6";
+      $this->version      = "1.5.0";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -65,7 +65,13 @@ function fz_visacheckout_init() {
               'type' => 'text',
               'description' => __("The Visa Checkout API Key (provided by Fat Zebra).", "woocommerce"),
               'default' => ""
-            )
+            ),
+      'logo_url' => array(
+              'title' => "Logo URL",
+              'type' => 'text',
+              'description' => "The HTTPS Logo URL to be displayed in the Visa Checkout Dialog. Maximum 174px wide and 34px high.",
+              'default' => ''
+            ),
       );
 
     } // End init_form_fields()
@@ -88,10 +94,12 @@ function fz_visacheckout_init() {
 
     function payment_fields() {
         global $woocommerce;
+        $callid = WC()->session->get('visa_wallet_callid');
       ?>
       <input type='hidden' name='encKey' id='encKey' />
       <input type='hidden' name='encPaymentData' id='encPaymentData' />
-      <input type='hidden' name='callid' id='callid' />
+      <input type='hidden' name='callid' id='callid' value='<?php echo $callid; ?>' />
+      <input type='hidden' name='token' id='token' value='<?php echo WC()->session->get('visa_wallet_token'); ?>' />
       
       <p>
         With Visa Checkout, you now have an easier way to pay with your card online, from the company you know and trust. Create an account once and speed through your purchase without re-entering payment or shipping information wherever you see Visa Checkout.
@@ -110,11 +118,17 @@ function fz_visacheckout_init() {
       wp_localize_script( 'fz-visacheckout', 'fzvisa', array(
             'api_key' => $this->settings['api_key'],
             'website' => get_site_url(),
+            'website_name' => get_bloginfo('title'),
+            'logo_url' => $this->settings['logo_url'],
             'regions' => array('AU'),
             'card_brands' => $accepted_cards,
             'currency' => get_woocommerce_currency(),
             'order_total' => $woocommerce->cart->total,
-            'visa_checkout_button' => "<img src='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=213' class='v-button' data-2x-image='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=425' width='213' height='47' role='button' style='float: right;'/>"
+            'visa_checkout_button' => "<img src='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=213' class='v-button' data-2x-image='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=425' width='213' height='47' role='button' style='float: right; width: auto; clear: both; border: none; background: none; box-shadow: none;'/>",
+            'button_text' => 'Pay',
+            'review_message' => 'Please select your card and click Pay to complete your order',
+            'shipping' => false,
+            'checkout_captured' => !is_null($callid)
             )
           );
       wp_enqueue_script( 'fz-visacheckout' );  
@@ -125,6 +139,12 @@ function fz_visacheckout_init() {
         wp_register_script('fz-deviceid', plugin_dir_url(__FILE__) . '/images/fatzebra-deviceid.js', array(), WC_VERSION, false);
         wp_register_script('fz-io-bb', $device_id_url, array('fz-deviceid'), '1', true);
         wp_enqueue_script('fz-io-bb');
+      }
+
+      if (!is_null($callid)) { 
+        //pre-select Visa Checkout as the payment method
+        $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+        $available_gateways['fatzebra_visacheckout']->set_current();
       }
 
     }
@@ -158,10 +178,12 @@ function fz_visacheckout_init() {
 
       $this->params["wallet"] = array(
                                   "type" => "VISA",
-                                  "encPaymentData" => $_POST['encPaymentData'],
-                                  "encKey" => $_POST['encKey'],
                                   "callid" => $_POST['callid']
                                 );
+
+      if (isset($_POST['token'])) {
+        $this->params['card_token'] = $_POST['token'];
+      }
 
       if ($this->parent_settings['fraud_data'] == 'yes') {
         $fz_base = new WC_FatZebra();
@@ -236,6 +258,9 @@ function fz_visacheckout_init() {
           }
           $order->payment_complete();
 
+          // Clear the session values
+          $this->clear_visa_checkout_session_values();
+
           // Store the card token as post meta
           update_post_meta($order_id, "_fatzebra_card_token", $result["card_token"]);
           update_post_meta($order_id, "fatzebra_card_token", $result["card_token"]);
@@ -246,6 +271,63 @@ function fz_visacheckout_init() {
           'result'  => 'success',
           'redirect'  => $this->get_return_url( $order )
         );
+      }
+    }
+
+    /**
+     *
+     * @return mixed WP_Error or Array (result)
+     */
+    function tokenize_card($params) {
+      $sandbox_mode = $this->parent_settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
+      $test_mode = $this->parent_settings["test_mode"] == "yes";
+
+      $ip = null; //get_post_meta($post_id, "Customer IP Address", true);
+      if (empty($ip)) $ip = "127.0.0.1";
+      if (!isset($payload["customer_ip"])) $payload["customer_ip"] = $ip;
+
+      $order_text = json_encode($params);
+
+      $url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
+      // Replace the URL with the tokenize method and re-create the order text (json payload)
+      $url = str_replace("purchases", "credit_cards", $url);
+      if (isset($params['callid'])) {
+        $payload = array("wallet" => array("type" => "VISA", "callid" => $params['callid']));
+      } else {
+        $payload = array("card_holder" => $params["card_holder"], "card_number" => $params["card_number"], "card_expiry" => $params["card_expiry"], "cvv" => $params["cvv"]);
+      }
+      $order_text = json_encode($payload);
+
+      $args = array('method' => 'POST', 'body' => $order_text, 'headers' => array('Authorization' => 'Basic ' . base64_encode($this->parent_settings["username"] . ":" . $this->parent_settings["token"]), 'X-Test-Mode' => $test_mode, 'User-Agent' => "WooCommerce Plugin " . $this->version), 'timeout' => 30);
+      try {
+        $this->response = (array)wp_remote_request($url, $args);
+        if ((int)$this->response["response"]["code"] != 200 && (int)$this->response["response"]["code"] != 201) {
+          $error = new WP_Error();
+          $error->add(1, "Credit Card Payment failed: " . $this->response["response"]["message"]);
+          $error->add_data($this->response);
+          return $error;
+        }
+
+        $this->response_data = json_decode($this->response['body']);
+
+        if (!$this->response_data->successful) {
+          $error = new WP_Error();
+          $error->add(2, "Gateway Error", $this->response_data->errors);
+
+          return $error;
+        }
+
+        return array(
+          "card_token" => $this->response_data->response->token, 
+          "card_number" => $this->response_data->response->card_number, 
+          "card_expiry" => $this->response_data->response->card_expiry, 
+          "card_holder" => $this->response_data->response->card_holder, 
+          "transaction_id" => $this->response_data->response->token,
+          "wallet" => $this->response_data->response->wallet);
+      } catch (Exception $e) {
+        $error = new WP_Error();
+        $error->add(4, "Unknown Error", $e);
+        return $error;
       }
     }
 
@@ -390,8 +472,7 @@ function fz_visacheckout_init() {
       }
     }
 
-    function get_customer_real_ip()
-    {
+    function get_customer_real_ip() {
       $customer_ip = $_SERVER['REMOTE_ADDR'];
       if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         $forwarded_ips = explode(', ', $_SERVER['HTTP_X_FORWARDED_FOR']);
@@ -399,6 +480,14 @@ function fz_visacheckout_init() {
       }
 
       return $customer_ip;
+    }
+
+    function clear_visa_checkout_session_values() {
+      $keys = array('visa_wallet_first_name', 'visa_wallet_last_name', 'visa_wallet_address_1', 'visa_wallet_address_2', 'visa_wallet_city', 'visa_wallet_state', 'visa_wallet_postcode', 'visa_wallet_phone', 'visa_wallet_email', 'visa_wallet_callid', 'visa_wallet_token');
+
+      foreach($keys as $key):
+        WC()->session->set($key, null);
+      endforeach; 
     }
   }
 
@@ -409,5 +498,185 @@ function fz_visacheckout_init() {
     $methods[] = 'WC_FatZebra_VisaCheckout'; return $methods;
   }
 
+  function inject_visacheckout_button() {
+    $payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
+    if (!isset($payment_gateways['fatzebra_visacheckout'])) {
+      return;
+    }
+
+    $gw = $payment_gateways['fatzebra_visacheckout'];
+
+    $amount = WC()->cart->total;
+    $visa_base_url = $gw->parent_settings['sandbox_mode'] == "yes" ? 'https://sandbox.secure.checkout.visa.com' : 'https://secure.checkout.visa.com';
+      $accepted_cards = array();
+      foreach($gw->parent_settings['show_card_logos'] as $card) {
+          if ($card == 'american_express') $card = "AMEX";
+          $accepted_cards[] = strtoupper($card);
+      }
+
+      wp_register_script( 'fz-visacheckout', plugin_dir_url(__FILE__) . '/images/fatzebra-visacheckout.js', array(), WC_VERSION, false );
+      wp_register_script( 'visa-checkout', "{$visa_base_url}/checkout-widget/resources/js/integration/v1/sdk.js", array(), WC_VERSION, true );
+      wp_localize_script( 'fz-visacheckout', 'fzvisa', array(
+            'api_key' => $gw->settings['api_key'],
+            'website' => get_site_url(),
+            'website_name' => get_bloginfo('title'),
+            'logo_url' => $gw->settings['logo_url'],
+            'regions' => array('AU'),
+            'card_brands' => $accepted_cards,
+            'currency' => get_woocommerce_currency(),
+            'order_total' => $amount,
+            'visa_checkout_button' => "<img src='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=213' class='v-button' data-2x-image='{$visa_base_url}/wallet-services-web/xo/button.png?locale=en_AU&card_brands=" . implode(",", $accepted_cards) . "&style=color&size=425' width='213' height='47' role='button' style='float: right; width: auto; clear: both; border: none; background: none; box-shadow: none;'/>",
+            'inline' => true,
+            'shipping' => false,
+            'button_text' => 'Continue',
+            'review_message' => 'Please select your card and click Continue to finish your order',
+            )
+          );
+      wp_enqueue_script( 'fz-visacheckout' );  
+      wp_enqueue_script( 'visa-checkout' );
+
+    // Visa Checkout Button
+    // Visa Checkout INIT
+    // Handler for callback (process payment, retrieve address details, update order)
+  }
+
+  function fz_visacheckout_set_callid_cookie() {
+    if (isset($_POST['callid']) && !empty($_POST['callid'])) {
+      wc_setcookie( 'fatzebra_visacheckout_callid', $_POST['callid'] );
+    }
+  }
+
+  function fz_visacheckout_load_from_callid($fields) {
+    $payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
+    if (!isset($payment_gateways['fatzebra_visacheckout'])) {
+      return;
+    }
+
+    $gw = $payment_gateways['fatzebra_visacheckout'];
+
+    $callid = isset($_COOKIE['fatzebra_visacheckout_callid']) ? $_COOKIE['fatzebra_visacheckout_callid'] : null;
+    if (empty($callid)) {
+      return $fields;
+    }
+    
+    $token_result = $gw->tokenize_card(array("callid" => $callid));
+
+    if (is_wp_error($token_result)) {
+      // Tokenization error - for now lets return the fields with no manipulation..
+      // error_log
+
+      return $fields;
+    } // Arghhh!
+
+    $wallet = $token_result['wallet'];
+
+    // Store the wallet data in a session. It is important to remove this upon successful checkout....
+    WC()->session->set('visa_wallet_first_name', $wallet->name->first);
+    WC()->session->set('visa_wallet_last_name', $wallet->name->last);
+    WC()->session->set('visa_wallet_address_1', $wallet->address->line_1);
+    WC()->session->set('visa_wallet_address_2', $wallet->address->line_2);
+    WC()->session->set('visa_wallet_city', $wallet->address->city);
+    WC()->session->set('visa_wallet_state', $wallet->address->state);
+    WC()->session->set('visa_wallet_postcode', $wallet->address->postcode);
+    WC()->session->set('visa_wallet_phone', $wallet->address->phone);
+    WC()->session->set('visa_wallet_email', $wallet->email);
+    WC()->session->set('visa_wallet_callid', $callid);
+    WC()->session->set('visa_wallet_token', $token_result['card_token']);
+
+    wc_setcookie('fatzebra_visacheckout_callid', null, time() - 3600);
+    return $fields;    
+  }
+
+  function fz_visacheckout_populate_default_field_value($_, $fieldname) {
+    switch($fieldname) {
+      case 'billing_email':
+        return WC()->session->get('visa_wallet_email');
+        break;
+
+      case 'billing_first_name':
+      case 'shipping_first_name':
+        return WC()->session->get('visa_wallet_first_name');
+        break;
+
+      case 'billing_last_name':
+      case 'shipping_last_name':
+        return WC()->session->get('visa_wallet_last_name');
+        break;
+
+      case 'billing_address_1':
+      case 'shipping_address_1':
+        return WC()->session->get('visa_wallet_address_1');
+        break;
+
+      case 'billing_address_2':
+      case 'shipping_address_2':
+        return WC()->session->get('visa_wallet_address_2');
+        break;
+
+
+      case 'billing_city':
+      case 'shipping_city':
+        return WC()->session->get('visa_wallet_city');
+        break;
+
+      case 'billing_state':
+      case 'shipping_state':
+        return WC()->session->get('visa_wallet_state');
+        break;
+
+      case 'billing_postcode':
+      case 'shipping_postcode':
+        return WC()->session->get('visa_wallet_postcode');
+        break;
+
+      case 'billing_phone':
+      case 'shipping_phone':
+        return WC()->session->get('visa_wallet_phone');
+        break;
+
+      case 'ship_to_different_address':
+        return false; // Using wallet we prefill the shipping address. The customer can change this if they want in the form.
+      break;
+    }
+  }
+
+  function fz_visacheckout_ship_to_different_address($value) {
+    return false;
+  }
+
+  function fz_visacheckout_force_gateway($gateways) {
+    if (is_null(WC()->session->get('visa_wallet_callid')))  {
+      return $gateways;
+    } else {
+
+      $forced_gateways = array();
+      $forced_gateways['fatzebra_visacheckout'] = $gateways['fatzebra_visacheckout'];
+
+      return $forced_gateways;
+    }
+  }
+
+  function fz_visacheckout_anticlickjack() {
+    ?>
+      <style id="antiClickjack">body{display:none;}</style>
+      <script type="text/javascript">
+        if (self === top) {
+          var antiClickjack = document.getElementById("antiClickjack");
+          antiClickjack.parentNode.removeChild(antiClickjack);
+        } else {
+          top.location = self.location;
+        }
+      </script>
+    <?php
+  }
+
   add_filter('woocommerce_payment_gateways', 'add_fz_visacheckout_gateway' );
+  add_action('woocommerce_proceed_to_checkout', 'inject_visacheckout_button');
+
+  add_action( 'woocommerce_set_cart_cookies',  'fz_visacheckout_set_callid_cookie' );
+  add_filter( 'woocommerce_checkout_fields' , 'fz_visacheckout_load_from_callid' );
+  add_filter( 'woocommerce_checkout_get_value', 'fz_visacheckout_populate_default_field_value', -10, 2);
+  add_filter( 'woocommerce_ship_to_different_address_checked', 'fz_visacheckout_ship_to_different_address');
+  add_filter( 'woocommerce_available_payment_gateways', 'fz_visacheckout_force_gateway', -10, 1);
+  add_action( 'wp_head', 'fz_visacheckout_anticlickjack', 1);
 }
