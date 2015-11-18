@@ -62,7 +62,7 @@ function fz_masterpass_init() {
               'title' => __( 'Enable/Disable', 'woocommerce' ),
               'type' => 'checkbox',
               'label' => __( 'Enable MasterPass', 'woocommerce' ),
-              'default' => 'yes'
+              'default' => 'no'
             ),
       'shared_secret' => array(
               'title' => __("Shared Secret", 'woocommerce'),
