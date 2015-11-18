@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.5.1
+Version: 1.5.2
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -58,7 +58,7 @@ function fz_init() {
       $this->icon = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields = true;
       $this->method_title = __('Fat Zebra', 'woocommerce');
-      $this->version = "1.5.1";
+      $this->version = "1.5.2";
 
       $this->api_version = "1.0";
       $this->live_url = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -277,12 +277,12 @@ function fz_init() {
       $order = new WC_Order($order_id);
       $this->params["currency"] = $order->get_order_currency();
 
-      if (class_exists("WC_Subscriptions_Order") && WC_Subscriptions_Order::order_contains_subscription($order)) {
+      if (class_exists("WC_Subscriptions_Order") && wcs_order_contains_subscription($order)) {
         // No deferred payments for subscriptions.
         $defer_payment = false;
         // Charge sign up fee + first period here..
         // Periodic charging should happen via scheduled_subscription_payment_fatzebra
-        $this->params["amount"] = (int)(WC_Subscriptions_Order::get_total_initial_payment($order) * 100);
+        $this->params["amount"] = (int)($order->get_total() * 100);
       } else {
         $this->params["amount"] = (int)($order->order_total * 100);
       }
