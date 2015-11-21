@@ -58,7 +58,7 @@ function fz_visacheckout_init() {
               'title' => __( 'Enable/Disable', 'woocommerce' ),
               'type' => 'checkbox',
               'label' => __( 'Enable Visa Checkout', 'woocommerce' ),
-              'default' => 'yes'
+              'default' => 'no'
             ),
       'api_key' => array(
               'title' => __("API Key", 'woocommerce'),
@@ -74,7 +74,7 @@ function fz_visacheckout_init() {
             ),
       'collect_shipping' => array(
               'title' => "Collect Shipping Details",
-              'type' => 'text',
+              'type' => 'checkbox',
               'default' => 'yes'
             ),  
       );
@@ -613,7 +613,7 @@ function fz_visacheckout_init() {
   function fz_visacheckout_load_from_callid($fields) {
     $payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
     if (!isset($payment_gateways['fatzebra_visacheckout'])) {
-      return;
+      return $fields;
     }
 
     $gw = $payment_gateways['fatzebra_visacheckout'];
@@ -722,6 +722,16 @@ function fz_visacheckout_init() {
   }
 
   function fz_visacheckout_anticlickjack() {
+    $payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
+    // Only show if Visa Checkout enabled
+    if (!isset($payment_gateways['fatzebra_visacheckout'])) {
+      return;
+    }
+
+    // Only show on Cart and Checkout
+    if(wc_get_page_id( 'checkout' ) != get_the_ID() && wc_get_page_id('cart') != get_the_ID()){
+      return;
+    }
     ?>
       <style id="antiClickjack">body{display:none;}</style>
       <script type="text/javascript">
