@@ -414,13 +414,13 @@ function fz_visacheckout_init() {
         }
 
         // Add the error details and return
-        $order->add_order_note(__("Subscription Payment Failed: " . $error . ". Transaction ID: " . $txn_id, WC_Subscriptions::$text_domain));
+        $order->add_order_note(__("Subscription Payment Failed: " . $error . ". Transaction ID: " . $txn_id));
         WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $order, $product_id );
 
       } else { // Success! Returned is an array with the transaction ID etc
         // Update the subscription and return
         // Add a note to the order
-        $order->add_order_note(__("Subscription Payment Successful. Transaction ID: " . $result["transaction_id"], WC_Subscriptions::$text_domain));
+        $order->add_order_note(__("Subscription Payment Successful. Transaction ID: " . $result["transaction_id"]));
         WC_Subscriptions_Manager::process_subscription_payments_on_order( $order );
       }
     }
