@@ -287,7 +287,7 @@ function fz_init() {
         $this->params["amount"] = (int)($order->order_total * 100);
       }
 
-      $this->params["reference"] = (string)$order_id;
+      $this->params["reference"] = "FZT-" . (string)$order_id;
       $test_mode = $this->settings['test_mode'] == 'yes';
       $this->params["test"] = $test_mode;
       $this->params["deferred"] = $defer_payment;
@@ -476,7 +476,7 @@ function fz_init() {
       $this->params = array();
       $this->params["amount"] = (int)($amount_to_charge * 100);
       $this->params["test"] = $test_mode;
-      $this->params["reference"] = $order->id . "-" . date("dmY"); // Reference for order ID 123 will become 123-01022012
+      $this->params["reference"] = "FZT-" . $order->id . "-" . date("dmY"); // Reference for order ID 123 will become 123-01022012
 
       $token = get_post_meta($order->id, "_fatzebra_card_token", true);
       if (empty($token)) $token = get_post_meta($order->id, "fatzebra_card_token", true);
@@ -791,7 +791,7 @@ function fz_init() {
     $this->params["customer_ip"] = $ip;
 
 
-    $params = array("card_token" => $token, "amount" => (int)($order->order_total * 100), "reference" => $order->id, "customer_ip" => $ip);
+    $params = array("card_token" => $token, "amount" => (int)($order->order_total * 100), "reference" => "FZT-" . $order->id, "customer_ip" => $ip);
 
     // Do the payment and handle the result.
     $result = $gateway->do_payment($params);
