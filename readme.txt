@@ -113,6 +113,12 @@ You should now be able to test the purchases via Fat Zebra.
 
 = 1.5.1 =
 * Fixed issue where visa checkout express option wasn't working properly
+
+= 1.5.2 =
+* Fixed deprecations and errors introduced with version mismatch against WC Subscriptions
+* Updated configuration to disable Visa Checkout and MasterPass by default
+* Fixed Visa Checkout anti-clickjack from running on pages which are not checkout and cart
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.
