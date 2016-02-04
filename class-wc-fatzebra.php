@@ -222,8 +222,8 @@ function fz_init() {
 
         wp_register_script('fz-direct-post-handler', plugin_dir_url(__FILE__) . '/images/fatzebra.js', array('jquery'), WC_VERSION, true);
         wp_localize_script('fz-direct-post-handler', 'fatzebra', array(
-          'url' => $url, 
-          'return_path' => $return_path, 
+          'url' => $url,
+          'return_path' => $return_path,
           'verification_value' => $verification_value)
         );
         wp_enqueue_script('fz-direct-post-handler');
@@ -247,7 +247,7 @@ function fz_init() {
       global $woocommerce;
 
       if ($this->direct_post_enabled()) {
-        $this->params["card_token"] = $_POST['card_token'];
+        $this->params["card_token"] = $_POST['fatzebra-token'];
       } else {
         $this->params["card_number"] = str_replace(' ', '', $_POST['fatzebra-card-number']);
         if (!isset($_POST["fatzebra-card-number"])) {
@@ -404,7 +404,7 @@ function fz_init() {
 
       $this->params["customer_ip"] = $this->get_customer_real_ip();
       $this->params["currency"] = $order->get_order_currency();
-      
+
       $test_mode = $this->settings['test_mode'] == 'yes';
       $this->params["test"] = $test_mode;
       $sandbox_mode = $this->settings["sandbox_mode"] == "yes"; // Yup, the checkbox settings return as 'yes' or 'no'
@@ -418,7 +418,7 @@ function fz_init() {
       $args = array('method' => 'POST',
                     'body' => $order_text,
                     'headers' => array('Authorization' => 'Basic ' . base64_encode($this->settings["username"] . ":" . $this->settings["token"]),
-                      'X-Test-Mode' => $test_mode, 
+                      'X-Test-Mode' => $test_mode,
                       'User-Agent' => "WooCommerce Plugin " . $this->version),
                     'timeout' => 30);
       try {
@@ -552,11 +552,11 @@ function fz_init() {
       }
 
       $args = array(
-        'method' => 'POST', 
-        'body' => $order_text, 
+        'method' => 'POST',
+        'body' => $order_text,
         'headers' => array(
           'Authorization' => 'Basic ' . base64_encode($this->settings["username"] . ":" . $this->settings["token"]),
-          'X-Test-Mode' => $test_mode, 
+          'X-Test-Mode' => $test_mode,
           'User-Agent' => "WooCommerce Plugin " . $this->version
           ),
         'timeout' => 30
@@ -624,13 +624,13 @@ function fz_init() {
       $order_text = json_encode($payload);
 
       $args = array(
-        'method' => 'POST', 
-        'body' => $order_text, 
+        'method' => 'POST',
+        'body' => $order_text,
         'headers' => array(
           'Authorization' => 'Basic ' . base64_encode($this->settings["username"] . ":" . $this->settings["token"]),
-          'X-Test-Mode' => $test_mode, 
+          'X-Test-Mode' => $test_mode,
           'User-Agent' => "WooCommerce Plugin " . $this->version
-          ), 
+          ),
         'timeout' => 30
         );
       try {
@@ -686,14 +686,14 @@ function fz_init() {
      */
     function get_fraud_customer($order) {
       $data = array(
-        'first_name' => $order->billing_first_name, 
-        'last_name' => $order->billing_last_name, 
-        'email' => $order->billing_email, 
-        'address_1' => $order->billing_address_1, 
-        'address_2' => $order->billing_address_2, 
-        'city' => $order->billing_city, 
-        'country' => $this->country_map[$order->billing_country], 
-        'post_code' => $order->billing_postcode, 
+        'first_name' => $order->billing_first_name,
+        'last_name' => $order->billing_last_name,
+        'email' => $order->billing_email,
+        'address_1' => $order->billing_address_1,
+        'address_2' => $order->billing_address_2,
+        'city' => $order->billing_city,
+        'country' => $this->country_map[$order->billing_country],
+        'post_code' => $order->billing_postcode,
         'home_phone' => $order->billing_phone
         );
 
@@ -718,11 +718,11 @@ function fz_init() {
         }
 
         $data[] = array(
-          'product_code' => (string)$product->id, 
-          'sku' => $product->sku, 
-          'description' => $name, 
-          'qty' => $item['qty'], 
-          'cost' => $product->get_price(), 
+          'product_code' => (string)$product->id,
+          'sku' => $product->sku,
+          'description' => $name,
+          'qty' => $item['qty'],
+          'cost' => $product->get_price(),
           'line_total' => $order->get_line_subtotal($item)
           );
       }
@@ -735,14 +735,14 @@ function fz_init() {
      */
     function get_fraud_shipping($order) {
       $data = array(
-      'first_name' => $order->shipping_first_name, 
-      'last_name' => $order->shipping_last_name, 
-      'email' => $order->shipping_email, 
-      'address_1' => $order->shipping_address_1, 
-      'address_2' => $order->shipping_address_2, 
-      'city' => $order->shipping_city, 
-      'country' => $this->country_map[$order->shipping_country], 
-      'post_code' => $order->shipping_postcode, 
+      'first_name' => $order->shipping_first_name,
+      'last_name' => $order->shipping_last_name,
+      'email' => $order->shipping_email,
+      'address_1' => $order->shipping_address_1,
+      'address_2' => $order->shipping_address_2,
+      'city' => $order->shipping_city,
+      'country' => $this->country_map[$order->shipping_country],
+      'post_code' => $order->shipping_postcode,
       'shipping_method' => 'low_cost' // TODO: Shipping Method Map
       );
 
@@ -848,7 +848,7 @@ function fz_init() {
 
   function fz_customize_woocommerce_states() {
     global $states;
- 
+
     $states['AU'] = array(
         'ACT' => __( 'ACT', 'woocommerce' ),
         'NSW' => __( 'NSW', 'woocommerce' ),
