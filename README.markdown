@@ -1,7 +1,7 @@
 Fat Zebra WooCommerce Plugin
 ============================
 
-Version 1.5.4 for API Version 1.0
+Version 1.5.5 for API Version 1.0
 
 A WordPress plugin to add Fat Zebra support to [WooCommerce](http://www.woothemes.com/woocommerce/) for Australian Merchants.
 
@@ -19,8 +19,8 @@ Install the plugin
 There are two methods to install the plugin:
 
 **Copy the file to the WordPress plugins directory:**
- 
- 
+
+
  1. Make a new directory in [SITE_ROOT]/wp-content/plugins called fatzebra-woocommerce
  2. Copy the file class-wc-fatzebra.php to this new directory.
  3. Activate the newly installed plugin in the WordPress Plugin Manager.
