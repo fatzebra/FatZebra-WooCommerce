@@ -20,6 +20,10 @@ var zjscb = function(data) {
   }
 }
 
+jQuery('form.checkout').on('change', '#fatzebra-cc-form input[type=text]', function() {
+  jQuery('#fatzebra-token').val('');
+});
+
 jQuery("form.checkout").bind("checkout_place_order_fatzebra", function(e) {
   var $form = jQuery(this);
   if (jQuery("#fatzebra-token").val().length !== 0) return true;
