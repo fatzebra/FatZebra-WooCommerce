@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.5.5
+Version: 1.5.6
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -282,9 +282,9 @@ function fz_init() {
         $defer_payment = false;
         // Charge sign up fee + first period here..
         // Periodic charging should happen via scheduled_subscription_payment_fatzebra
-        $this->params["amount"] = (int)($order->get_total() * 100);
+        $this->params["amount"] = $this->convert_to_cents($order->get_total());
       } else {
-        $this->params["amount"] = (int)($order->order_total * 100);
+        $this->params["amount"] = $this->convert_to_cents($order->order_total);
       }
 
       $this->params["reference"] = (string)$order_id;
@@ -395,7 +395,7 @@ function fz_init() {
       global $woocommerce;
 
       $order = new WC_Order($order_id);
-      $this->params["amount"] = (int)($amount * 100);
+      $this->params["amount"] = $this->convert_to_cents($amount);
       $this->params["reference"] = $order_id . "-" . time(); // It is not possible to simply refund against the order ID as multiple reunds are permitted...
       $this->params["transaction_id"] = get_post_meta($order_id, '_transaction_id', true);
       if (empty($this->params['transaction_id'])) {
@@ -474,7 +474,7 @@ function fz_init() {
      */
     function scheduled_subscription_payment($amount_to_charge, $order, $product_id) {
       $this->params = array();
-      $this->params["amount"] = (int)($amount_to_charge * 100);
+      $this->params["amount"] = $this->convert_to_cents($amount_to_charge);
       $this->params["test"] = $test_mode;
       $this->params["reference"] = $order->id . "-" . date("dmY"); // Reference for order ID 123 will become 123-01022012
 
@@ -760,6 +760,23 @@ function fz_init() {
 
       return $customer_ip;
     }
+
+    /**
+     * Safely convert to cents, preventing rounding errors
+     * Before: $134.95 = 13,494 cents
+     * After: $134.95 = 13,495 cents
+     * @param  float $amount Amount in dollars (eg 134.95)
+     * @return int           Amount in Cents (eg 13495)
+     */
+    public function convert_to_cents($amount)
+    {
+      if(function_exists('bcmul')) {
+        // BCMath is the most reliable method, if enabled
+        return (int) bcmul($amount, 100);
+      }
+      // Hacky workaround
+      return (int) round(($amount * 100), 0, PHP_ROUND_HALF_UP);
+    }
   }
 
   /**
@@ -791,7 +808,7 @@ function fz_init() {
     $this->params["customer_ip"] = $ip;
 
 
-    $params = array("card_token" => $token, "amount" => (int)($order->order_total * 100), "reference" => $order->id, "customer_ip" => $ip);
+    $params = array("card_token" => $token, "amount" => $this->convert_to_cents($order->order_total), "reference" => $order->id, "customer_ip" => $ip);
 
     // Do the payment and handle the result.
     $result = $gateway->do_payment($params);
