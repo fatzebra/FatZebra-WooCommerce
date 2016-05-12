@@ -72,13 +72,13 @@ You should now be able to test the purchases via Fat Zebra.
 * Added help icon for security code
 * Removed style for logo and added CSS in style block to allow for override.
 
-= 1.3.4 = 
+= 1.3.4 =
 * Fixed lazy PHP tag (<?) causing issues in PHP 5.3.3
 
 = 1.3.5 =
 * Fixed support for 2.0 and tested on both 2.0 and 1.6
 
-= 1.3.6 = 
+= 1.3.6 =
 * Updated supports attributes to allow for amount changes, removing the notification when viewing/editing an order.
 
 = 1.4.0 =
@@ -121,6 +121,10 @@ You should now be able to test the purchases via Fat Zebra.
 
 = 1.5.4 =
 * Updated reference prefix used during testing
+
+= 1.5.5 =
+* Fix incorrect field breaking Direct Post (As per https://wordpress.org/support/topic/bug-152-breaks-direct-post)
+* Empty Credit Card Token when Credit Card details are modified, fixes problem where subsequent payment attempts with a new credit card continue to use the original tokenized card, even if original card has been declined
 
 == Support ==
 

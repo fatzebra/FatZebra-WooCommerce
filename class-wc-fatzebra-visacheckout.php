@@ -8,7 +8,7 @@ function fz_visacheckout_init() {
       $this->icon         = "https://assets.secure.checkout.visa.com/VmeCardArts/partner/POS_horizontal_99x34.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (VISA Checkout)', 'woocommerce' );
-      $this->version      = "1.5.1";
+      $this->version      = "1.5.5";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -34,7 +34,7 @@ function fz_visacheckout_init() {
       add_action('scheduled_subscription_payment_' . $this->id, array(&$this, 'scheduled_subscription_payment'), 10, 3);
     }
 
-    /** 
+    /**
      * Initializes the parent (WC_FatZebra) settings
      */
     function init_parent_settings() {
@@ -76,7 +76,7 @@ function fz_visacheckout_init() {
               'title' => "Collect Shipping Details",
               'type' => 'checkbox',
               'default' => 'yes'
-            ),  
+            ),
       );
 
     } // End init_form_fields()
@@ -105,7 +105,7 @@ function fz_visacheckout_init() {
       <input type='hidden' name='encPaymentData' id='encPaymentData' />
       <input type='hidden' name='callid' id='callid' value='<?php echo $callid; ?>' />
       <input type='hidden' name='token' id='token' value='<?php echo WC()->session->get('visa_wallet_token'); ?>' />
-      
+
       <p>
         With Visa Checkout, you now have an easier way to pay with your card online, from the company you know and trust. Create an account once and speed through your purchase without re-entering payment or shipping information wherever you see Visa Checkout.
       </p>
@@ -150,7 +150,7 @@ function fz_visacheckout_init() {
             'checkout_captured' => !is_null($callid)
             )
           );
-      wp_enqueue_script( 'fz-visacheckout' );  
+      wp_enqueue_script( 'fz-visacheckout' );
       wp_enqueue_script( 'visa-checkout' );
 
       if ($this->parent_settings['fraud_data'] == 'yes' && $this->parent_settings["fraud_device_id"] === "yes") {
@@ -160,7 +160,7 @@ function fz_visacheckout_init() {
         wp_enqueue_script('fz-io-bb');
       }
 
-      if (!is_null($callid)) { 
+      if (!is_null($callid)) {
         //pre-select Visa Checkout as the payment method
         $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
         $available_gateways['fatzebra_visacheckout']->set_current();
@@ -347,10 +347,10 @@ function fz_visacheckout_init() {
         }
 
         return array(
-          "card_token" => $this->response_data->response->token, 
-          "card_number" => $this->response_data->response->card_number, 
-          "card_expiry" => $this->response_data->response->card_expiry, 
-          "card_holder" => $this->response_data->response->card_holder, 
+          "card_token" => $this->response_data->response->token,
+          "card_number" => $this->response_data->response->card_number,
+          "card_expiry" => $this->response_data->response->card_expiry,
+          "card_holder" => $this->response_data->response->card_holder,
           "transaction_id" => $this->response_data->response->token,
           "wallet" => $this->response_data->response->wallet);
       } catch (Exception $e) {
@@ -516,7 +516,7 @@ function fz_visacheckout_init() {
 
       foreach($keys as $key):
         WC()->session->set($key, null);
-      endforeach; 
+      endforeach;
     }
 
     function get_visa_checkout_button($accepted_cards) {
@@ -600,7 +600,7 @@ function fz_visacheckout_init() {
             'review_message' => 'Please select your card and click Continue to finish your order',
             )
           );
-      wp_enqueue_script( 'fz-visacheckout' );  
+      wp_enqueue_script( 'fz-visacheckout' );
       wp_enqueue_script( 'visa-checkout' );
   }
 
@@ -622,7 +622,7 @@ function fz_visacheckout_init() {
     if (empty($callid)) {
       return $fields;
     }
-    
+
     $token_result = $gw->tokenize_card(array("callid" => $callid));
 
     if (is_wp_error($token_result)) {
@@ -649,7 +649,7 @@ function fz_visacheckout_init() {
     WC()->session->set('visa_wallet_masked_number', $token_result['card_number']);
 
     wc_setcookie('fatzebra_visacheckout_callid', null, time() - 3600);
-    return $fields;    
+    return $fields;
   }
 
   function fz_visacheckout_populate_default_field_value($_, $fieldname) {
