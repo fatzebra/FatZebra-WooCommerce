@@ -8,7 +8,7 @@ function fz_visacheckout_init() {
       $this->icon         = "https://assets.secure.checkout.visa.com/VmeCardArts/partner/POS_horizontal_99x34.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (VISA Checkout)', 'woocommerce' );
-      $this->version      = "1.5.7";
+      $this->version      = "1.5.8";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -713,6 +713,8 @@ function fz_visacheckout_init() {
     if (is_null(WC()->session && WC()->session->get('visa_wallet_callid')))  {
       return $gateways;
     } else {
+
+      if(!isset($gateways['fatzebra_visacheckout'])) return $gateways;
 
       $forced_gateways = array();
       $forced_gateways['fatzebra_visacheckout'] = $gateways['fatzebra_visacheckout'];
