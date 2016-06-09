@@ -710,7 +710,7 @@ function fz_visacheckout_init() {
   }
 
   function fz_visacheckout_force_gateway($gateways) {
-    if (is_null(WC()->session->get('visa_wallet_callid')))  {
+    if (is_null(WC()->session && WC()->session->get('visa_wallet_callid')))  {
       return $gateways;
     } else {
 
