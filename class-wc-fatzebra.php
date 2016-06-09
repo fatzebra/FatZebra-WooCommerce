@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.5.6
+Version: 1.5.7
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -58,7 +58,7 @@ function fz_init() {
       $this->icon = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields = true;
       $this->method_title = __('Fat Zebra', 'woocommerce');
-      $this->version = "1.5.5";
+      $this->version = "1.5.7";
 
       $this->api_version = "1.0";
       $this->live_url = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
