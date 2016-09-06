@@ -8,7 +8,7 @@ function fz_visacheckout_init() {
       $this->icon         = "https://assets.secure.checkout.visa.com/VmeCardArts/partner/POS_horizontal_99x34.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (VISA Checkout)', 'woocommerce' );
-      $this->version      = "1.5.8";
+      $this->version      = "1.5.10";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -43,9 +43,9 @@ function fz_visacheckout_init() {
         $this->parent_settings = array();
       }
 
-      if ( $this->parent_settings && is_array( $this->parent_settings ) ) {
-       $this->parent_settings = array_map( array( $this, 'format_settings' ), $this->parent_settings );
-      }
+      // if ( $this->parent_settings && is_array( $this->parent_settings ) ) {
+      //  $this->parent_settings = array_map( array( $this, 'format_settings' ), $this->parent_settings );
+      // }
     }
 
     /**

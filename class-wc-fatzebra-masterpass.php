@@ -8,7 +8,7 @@ function fz_masterpass_init() {
       $this->icon         = "https://www.mastercard.com/mc_us/wallet/img/en/AU/mcpp_wllt_btn_chk_147x034px.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (MasterPass)', 'woocommerce' );
-      $this->version      = "1.5.8";
+      $this->version      = "1.5.10";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -47,9 +47,9 @@ function fz_masterpass_init() {
         $this->parent_settings = array();
       }
 
-      if ( $this->parent_settings && is_array( $this->parent_settings ) ) {
-       $this->parent_settings = array_map( array( $this, 'format_settings' ), $this->parent_settings );
-      }
+      // if ( $this->parent_settings && is_array( $this->parent_settings ) ) {
+      //  $this->parent_settings = array_map( array( $this, 'format_settings' ), $this->parent_settings );
+      // }
     }
 
     /**
