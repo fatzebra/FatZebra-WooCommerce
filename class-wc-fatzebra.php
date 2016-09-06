@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.5.8
+Version: 1.5.10
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -47,18 +47,20 @@ function fz_init() {
   }
 
   include("class-wc-fatzebra-masterpass.php");
-  include("class-wc-fatzebra-visacheckout.php");
   fz_masterpass_init();
+  include("class-wc-fatzebra-visacheckout.php");
   fz_visacheckout_init();
+  // include("class-wc-fatzebra-amex-eco.php");
+  // fz_amex_eco_init();
 
-  class WC_FatZebra extends WC_Payment_Gateway {
+  class WC_FatZebra extends WC_Payment_Gateway_CC {
 
     public function __construct() {
       $this->id = 'fatzebra';
       $this->icon = apply_filters('woocommerce_fatzebra_icon', '');
       $this->has_fields = true;
       $this->method_title = __('Fat Zebra', 'woocommerce');
-      $this->version = "1.5.8";
+      $this->version = "1.5.10";
 
       $this->api_version = "1.0";
       $this->live_url = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
@@ -77,11 +79,15 @@ function fz_init() {
       // Load the settings.
       $this->init_settings();
 
+      if ($this->direct_post_enabled()) {
+        $this->supports = array_push($this->supports, 'tokenization');
+      }
+
       // Actions
       add_action('woocommerce_update_options_payment_gateways', array(&$this, 'process_admin_options')); // < 2.0
       add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'process_admin_options')); //> 2.0
       add_action('scheduled_subscription_payment_fatzebra', array(&$this, 'scheduled_subscription_payment'), 10, 3);
-      add_action('woocommerce_order_actions', array(&$this, 'add_process_deferred_payment_button'), 99, 1);
+      // add_action('woocommerce_order_actions', array(&$this, 'add_process_deferred_payment_button'), 99, 1);
     }
 
     /**
@@ -174,12 +180,12 @@ function fz_init() {
           'description' => __("The Gateway Shared Secret - Required for Direct Post", "woocommerce"),
           'default' => ""
         ),
-        'deferred_payments' => array(
-          'title' => __("Enable Deferred Payments", "woocommerce"),
-          'type' => 'checkbox',
-          'description' => __("Deferred payments enable you to capture the customers card details in Fat Zebra's system and process them at a later date (for example, once you have reviewed the order for high-risk products). Note: Deferred Payments cannot be used with WooCommerce Subscription - any subscriptions will be processed in Real Time.", "woocommerce"),
-          'default' => 'no'
-        ),
+        // 'deferred_payments' => array(
+        //   'title' => __("Enable Deferred Payments", "woocommerce"),
+        //   'type' => 'checkbox',
+        //   'description' => __("Deferred payments enable you to capture the customers card details in Fat Zebra's system and process them at a later date (for example, once you have reviewed the order for high-risk products). Note: Deferred Payments cannot be used with WooCommerce Subscription - any subscriptions will be processed in Real Time.", "woocommerce"),
+        //   'default' => 'no'
+        // ),
         'fraud_data' => array(
           'title' => __("Send Fraud Data", "woocommerce"),
           'type' => 'checkbox',
@@ -229,7 +235,7 @@ function fz_init() {
         wp_enqueue_script('fz-direct-post-handler');
       }
 
-      $extra_fields = array("<input type='hidden' name='fatzebra-token' id='fatzebra-token' /><span class='payment-errors required'></span>");
+      echo "<input type='hidden' name='fatzebra-token' id='fatzebra-token' /><span class='payment-errors required'></span>";
 
       if ($this->fraud_detection_enabled() && $this->settings["fraud_device_id"] === "yes") {
         $device_id_url = $this->settings['sandbox_mode'] == 'yes' ? 'https://ci-mpsnare.iovation.com/snare.js' : 'https://mpsnare.iesnare.com/snare.js';
@@ -237,7 +243,8 @@ function fz_init() {
         wp_register_script('fz-io-bb', $device_id_url, array('fz-deviceid'), '1', true);
         wp_enqueue_script('fz-io-bb');
       }
-      $this->credit_card_form(array('fields_have_names' => !$this->direct_post_enabled()), $extra_fields);
+      $this->form(array('fields_have_names' => !$this->direct_post_enabled()), $extra_fields);
+
     }
 
     /**
@@ -272,7 +279,7 @@ function fz_init() {
 
       $this->params["customer_ip"] = $this->get_customer_real_ip();
 
-      $defer_payment = $this->settings["deferred_payments"] == "yes";
+      $defer_payment = false; //$this->settings["deferred_payments"] == "yes";
 
       $order = new WC_Order($order_id);
       $this->params["currency"] = $order->get_order_currency();
@@ -537,6 +544,7 @@ function fz_init() {
       $order_text = json_encode($params);
 
       $url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
+      error_log("Doing payment... " . $order_text);
 
       // Deferred payments need to post to the /credit_cards endpoint.
       if (isset($params["deferred"]) && $params["deferred"]) {
@@ -563,7 +571,9 @@ function fz_init() {
         );
 
       try {
+        error_log("$url: " > print_r($args, true));
         $this->response = (array)wp_remote_request($url, $args);
+        error_log(print_r($this->response, true));
 
         if ((int)$this->response["response"]["code"] != 200 && (int)$this->response["response"]["code"] != 201) {
           $error = new WP_Error();
