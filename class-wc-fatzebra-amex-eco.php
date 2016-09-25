@@ -441,10 +441,11 @@ function fz_amex_eco_init() {
 
     $sandbox_mode = $gw->parent_settings["sandbox_mode"] == "yes";
     $base_url = $sandbox_mode ? 'https://paynow-sandbox.pmnts.io' : 'https://paynow.pmnts.io';
-    echo "<iframe src='$base_url/v2/amexeco/$username/ABC123/AUD/$amount/abcd1234?tokenize_only=true&postmessage=true' frameborder='0' height='49' width='403'></iframe>";
+    echo "<iframe src='$base_url/v2/amexeco/$username/ABC123/AUD/$amount/abcd1234?tokenize_only=true&postmessage=true' frameborder='0' height='38' width='155' seamless='seamless' allowtransparency='true' scrolling='no' style='position:relative; margin-top: -20px; top: 15px;'></iframe>";
   }
 
   function fz_amex_eco_load_from_auth_code() {
+    clear_amex_eco_session_values();
     $payment_gateways = WC()->payment_gateways->get_available_payment_gateways();
     if (!isset($payment_gateways['fatzebra_amex_eco'])) {
       return $fields;
@@ -478,6 +479,7 @@ function fz_amex_eco_init() {
     WC()->session->set('amex_wallet_city', $wallet->address->city);
     WC()->session->set('amex_wallet_state', $wallet->address->state);
     WC()->session->set('amex_wallet_postcode', $wallet->address->postcode);
+    WC()->session->set('amex_wallet_country', $wallet->address->country); // 2 letter code
     WC()->session->set('amex_wallet_phone', $wallet->address->phone);
     WC()->session->set('amex_wallet_email', $wallet->email);
     WC()->session->set('amex_wallet_auth_code', $auth_code);
@@ -517,6 +519,11 @@ function fz_amex_eco_init() {
       case 'billing_city':
       case 'shipping_city':
         return WC()->session->get('amex_wallet_city');
+        break;
+
+      case 'billing_country':
+      case 'shipping_country':
+        return WC()->session->get('amex_wallet_country');
         break;
 
       case 'billing_state':
@@ -560,10 +567,11 @@ function fz_amex_eco_init() {
   }
 
   add_filter('woocommerce_payment_gateways', 'add_fz_amex_eco_gateway' );
-  add_action('woocommerce_proceed_to_checkout', 'inject_amex_eco_button');
+  add_action('woocommerce_cart_actions', 'inject_amex_eco_button');
   add_action( 'woocommerce_api_wc_fatzebra_amex_eco', 'fz_amex_eco_load_from_auth_code' );
   add_filter( 'woocommerce_checkout_get_value', 'fz_amex_eco_populate_default_field_value', -10, 2);
   add_filter( 'woocommerce_ship_to_different_address_checked', 'fz_amex_eco_ship_to_different_address');
   add_filter( 'woocommerce_available_payment_gateways', 'fz_amex_eco_force_gateway', -10, 1);
 
 }
+
