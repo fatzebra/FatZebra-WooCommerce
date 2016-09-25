@@ -50,8 +50,8 @@ function fz_init() {
   fz_masterpass_init();
   include("class-wc-fatzebra-visacheckout.php");
   fz_visacheckout_init();
-  // include("class-wc-fatzebra-amex-eco.php");
-  // fz_amex_eco_init();
+  include("class-wc-fatzebra-amex-eco.php");
+  fz_amex_eco_init();
 
   class WC_FatZebra extends WC_Payment_Gateway_CC {
 
