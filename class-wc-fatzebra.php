@@ -80,7 +80,7 @@ function fz_init() {
       $this->init_settings();
 
       if ($this->direct_post_enabled()) {
-        $this->supports = array_push($this->supports, 'tokenization');
+        array_push($this->supports, 'tokenization');
       }
 
       // Actions
