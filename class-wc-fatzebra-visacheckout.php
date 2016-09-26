@@ -627,7 +627,6 @@ function fz_visacheckout_init() {
 
     if (is_wp_error($token_result)) {
       // Tokenization error - for now lets return the fields with no manipulation..
-      // error_log
 
       return $fields;
     } // Arghhh!

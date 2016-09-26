@@ -544,7 +544,6 @@ function fz_init() {
       $order_text = json_encode($params);
 
       $url = $sandbox_mode ? $this->sandbox_url : $url = $this->live_url;
-      error_log("Doing payment... " . $order_text);
 
       // Deferred payments need to post to the /credit_cards endpoint.
       if (isset($params["deferred"]) && $params["deferred"]) {
@@ -571,9 +570,7 @@ function fz_init() {
         );
 
       try {
-        error_log("$url: " > print_r($args, true));
         $this->response = (array)wp_remote_request($url, $args);
-        error_log(print_r($this->response, true));
 
         if ((int)$this->response["response"]["code"] != 200 && (int)$this->response["response"]["code"] != 201) {
           $error = new WP_Error();

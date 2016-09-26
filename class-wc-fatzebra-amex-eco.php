@@ -464,7 +464,6 @@ function fz_amex_eco_init() {
     $token_result = $gw->tokenize_card(array("auth_code" => $auth_code, 'transaction_id' => $transaction_id, 'wallet_id' => $wallet_id, 'card_type' => $card_type));
     if (is_wp_error($token_result)) {
       // Tokenization error - for now lets return the fields with no manipulation..
-      // error_log
       clear_amex_eco_session_values();
       return $fields;
     } // Arghhh!
@@ -574,4 +573,3 @@ function fz_amex_eco_init() {
   add_filter( 'woocommerce_available_payment_gateways', 'fz_amex_eco_force_gateway', -10, 1);
 
 }
-
