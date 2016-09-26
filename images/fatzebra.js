@@ -20,7 +20,7 @@ var zjscb = function(data) {
   }
 }
 
-jQuery('form.checkout').on('change', '#fatzebra-cc-form input[type=text]', function() {
+jQuery('form.checkout').on('change', '#wc-fatzebra-cc-form input[type=text]', function() {
   jQuery('#fatzebra-token').val('');
 });
 
