@@ -136,6 +136,10 @@ You should now be able to test the purchases via Fat Zebra.
 = 1.5.10 =
 * Fixed issue with Direct Post in WooCommerce 2.6
 * Setup read for Amex Express Checkout
+
+= 1.5.12 =
+* Fixed refund not processing due to change in storage of transaction ID
+
 == Support ==
 
 If you have any issue with the Fat Zebra Gateway for WooCommerce please contact us at support@fatzebra.com.au and we will be more then happy to help out.

@@ -4,7 +4,7 @@
 Plugin Name: WooCommerce Fat Zebra Gateway
 Plugin URI: https://www.fatzebra.com.au/support/supported-carts
 Description: Extends WooCommerce with Fat Zebra payment gateway along with WooCommerce subscriptions support.
-Version: 1.5.11
+Version: 1.5.12
 Author: Fat Zebra
 Author URI: https://www.fatzebra.com.au
 */
@@ -404,8 +404,8 @@ function fz_init() {
       $order = new WC_Order($order_id);
       $this->params["amount"] = $this->convert_to_cents($amount);
       $this->params["reference"] = $order_id . "-" . time(); // It is not possible to simply refund against the order ID as multiple reunds are permitted...
-      $this->params["transaction_id"] = get_post_meta($order_id, '_transaction_id', true);
-      if (empty($this->params['transaction_id'])) {
+      $this->params["transaction_id"] = $order->get_transaction_id();
+      if (empty($this->params['transaction_id']) || $this->params["transaction_id"] == false) { // get_post_meta could be falsy if the value does not exist...
         $this->params["transaction_id"] = $this->fetch_fatzebra_transaction_id($order_id);
       }
 

@@ -8,7 +8,7 @@ function fz_amex_eco_init() {
       $this->icon         = "https://web.aexp-static.com/au/content/text/express-checkout/hub/images/ExpressCheckout_HeaderGraphic.png";
       $this->has_fields   = true;
       $this->method_title = __( 'Fat Zebra (AMEX ECO)', 'woocommerce' );
-      $this->version      = "1.5.11";
+      $this->version      = "1.5.12";
 
       $this->api_version  = "1.0";
       $this->live_url     = "https://gateway.fatzebra.com.au/v{$this->api_version}/purchases";
