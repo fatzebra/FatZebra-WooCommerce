@@ -440,7 +440,7 @@ function fz_amex_eco_init() {
     $username = $gw->parent_settings['username'];
 
     $sandbox_mode = $gw->parent_settings["sandbox_mode"] == "yes";
-    $base_url = $sandbox_mode ? 'https://paynow-sandbox.pmnts.io' : 'https://paynow.pmnts.io';
+    $base_url = $sandbox_mode ? 'https://paynow.pmnts-sandbox.io' : 'https://paynow.pmnts.io';
     echo "<iframe src='$base_url/v2/amexeco/$username/ABC123/AUD/$amount/abcd1234?tokenize_only=true&postmessage=true' frameborder='0' height='38' width='155' seamless='seamless' allowtransparency='true' scrolling='no' style='position:relative; margin-top: -20px; top: 15px;'></iframe>";
   }
 
